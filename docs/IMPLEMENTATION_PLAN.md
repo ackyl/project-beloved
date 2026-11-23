@@ -13,7 +13,7 @@ Tilemap and collision, walking and jumping (with coyote time and a jump buffer),
 **Tests:** jump arc and coyote window; no tunnelling through tiles at maximum speed; throw trajectories are deterministic; a dropped prop never ends up inside a tile; the most recently pressed direction wins.
 **Acceptance:** moving around is fun in an empty room with keyboard only.
 
-## Chunk 2: Death, corpses and the Death Board
+## Chunk 2: Death, corpses and the Death Board ✅
 
 Hazard events, the freeze-and-sparks transition, corpse entities (stacking, grabbing, standing on them, and the cap with Bas's cart), the replicator respawn, the death card, the Death Board overlay and the first 8 deaths.
 **Tests:** each death predicate fires exactly for its setup; repeats don't re-award; a 5-corpse stack is stable and climbable; the death-to-respawn cycle takes at most 3 s.

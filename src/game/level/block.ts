@@ -1,12 +1,13 @@
 import { Grid, type Level } from "./level";
 
-// The block, roughed in for Chunk 1: the walk-up, the street and the scrapyard.
-// Hazards arrive in Chunks 2 and 3. The street surface is the top of row 30.
+// The block: the walk-up, the street and the scrapyard. The street surface is
+// the top of row 30.
 //
-//   x  0–21   West street: tram stop shelter, awning
+//   x  0–21   West street: tram stop, tram shelter, canal, awning
 //   x 22–45   The Building: ground-floor flat, floor 2, roof with tank and antenna
-//   x 46–75   East street: fire escape, dumpster, noodle cart, vending machine, shack
-//   x 76–111  Scrapyard: fence, scrap piles, compactor pit, crane gantry
+//   x 46–75   East street: fire escape, power strip, power line, dumpster,
+//             noodle cart, vending machine, shack
+//   x 76–111  Scrapyard: fence, scrap piles, compactor, mirrors, crane
 export const STREET = 30;
 
 export function buildBlock(): Level {
@@ -37,6 +38,7 @@ export function buildBlock(): Level {
 
   // West street.
   g.rect(8, 27, 6, 1, "=") // tram shelter roof
+    .rect(15, STREET, 4, 2, ".") // canal
     .rect(17, 24, 5, 1, "="); // awning
 
   // East street and the shack.
@@ -49,12 +51,13 @@ export function buildBlock(): Level {
     .rect(80, 27, 6, 3, "M") // scrap pile
     .rect(82, 24, 3, 3, "M")
     .rect(88, STREET, 5, 2, ".") // compactor pit
-    .rect(95, 27, 7, 3, "M") // second pile
+    .rect(95, 27, 7, 3, "M") // second pile, under the mirrors' focus
     .rect(97, 25, 3, 2, "M")
     .rect(96, 16, 12, 1, "=") // crane gantry
     .rect(108, 16, 1, 14, "H") // crane ladder
     .rect(111, 20, 1, 10, "M"); // yard wall
 
+  const zipline = { x1: 22.6, y1: 16.1, x2: 8.6, y2: 27.1 };
   return {
     name: "The block",
     w: g.w,
@@ -64,9 +67,9 @@ export function buildBlock(): Level {
     props: [
       { kind: "crate", x: 31, y: STREET },
       { kind: "pot", x: 35, y: 24 },
-      { kind: "pot", x: 30, y: 18 },
+      { kind: "pot", x: 33, y: 18 },
       { kind: "crate", x: 11, y: 27 },
-      { kind: "crate", x: 52.5, y: STREET },
+      { kind: "crate", x: 50.4, y: STREET },
       { kind: "tire", x: 83.5, y: 24 },
       { kind: "crate", x: 98.5, y: 25 },
       { kind: "tire", x: 104, y: STREET },
@@ -79,20 +82,55 @@ export function buildBlock(): Level {
       { kind: "sofa", x: 37, y: 24 },
       { kind: "lamp", x: 40, y: 24 },
       { kind: "solar", x: 28.5, y: 18 },
-      { kind: "solar", x: 32, y: 18 },
-      { kind: "plant", x: 35, y: 18 },
-      { kind: "plant", x: 36.2, y: 18 },
+      { kind: "solar", x: 31.2, y: 18 },
+      { kind: "planterBox", x: 34.6, y: 18 },
+      { kind: "drip", x: 36.4, y: 18 },
       { kind: "antenna", x: 43.5, y: 8 },
-      { kind: "laundry", x: 45.6, y: 17.2, x2: 63, y2: 21.6 },
-      { kind: "laundry", x: 2, y: 21, x2: 22, y2: 19.5 },
-      { kind: "tramSign", x: 5, y: STREET },
-      { kind: "streetLamp", x: 16, y: STREET },
+      { kind: "laundry", x: 45.6, y: 16.4, x2: 63, y2: 19.6 },
+      { kind: "laundry", ...zipline, x: zipline.x1, y: zipline.y1 },
+      { kind: "canal", x: 15, y: STREET, x2: 19 },
+      { kind: "tramSign", x: 8.4, y: STREET },
+      { kind: "streetLamp", x: 20.4, y: STREET },
+      { kind: "powerStrip", x: 47.3, y: STREET },
+      { kind: "powerline", x: 50.6, y: 19, x2: 55.6 },
       { kind: "dumpster", x: 53.5, y: STREET },
       { kind: "noodleCart", x: 56.2, y: STREET },
-      { kind: "vending", x: 60, y: STREET },
+      { kind: "vending", x: 60.2, y: STREET },
       { kind: "streetLamp", x: 74, y: STREET },
       { kind: "compactor", x: 90.5, y: STREET + 2 },
-      { kind: "crane", x: 108.5, y: STREET, x2: 100, y2: 16 },
+      { kind: "compactorButton", x: 94.2, y: STREET },
+      { kind: "mirrors", x: 98.5, y: 24.4 },
+      { kind: "crane", x: 108.5, y: STREET, x2: 104, y2: 16 },
     ],
+    zones: [
+      { kind: "canal", x: 15, y: STREET + 0.35, w: 4, h: 1.65 },
+      { kind: "fryer", x: 55.5, y: 27.95, w: 1.4, h: 0.35 },
+      { kind: "pellCart", x: 55, y: 28, w: 3.4, h: 2 },
+      { kind: "powerline", x: 50.6, y: 18.9, w: 5, h: 0.2 },
+      { kind: "solar", x: 97.4, y: 23.6, w: 1.2, h: 1.4 },
+      { kind: "drip", x: 36, y: 16.4, w: 0.8, h: 1.6 },
+    ],
+    ledges: [{ x: 52.25, y: 28.45, w: 2.5, h: 0.1 }],
+    interactables: [
+      { kind: "zipline", x: zipline.x1, y: 17 },
+      { kind: "powerStrip", x: 47.3, y: STREET },
+      { kind: "vending", x: 60.2, y: STREET },
+      { kind: "planter", x: 34.6, y: 18 },
+      { kind: "compactorButton", x: 94.2, y: STREET },
+      { kind: "deathBoard", x: 34.5, y: STREET },
+    ],
+    neighbours: [
+      { id: "juniper", x: 37.3, y: 18 },
+      { id: "rook", x: 47.3, y: 24 },
+      { id: "pell", x: 57.9, y: STREET },
+      { id: "bas", x: 79.5, y: STREET },
+    ],
+    machines: {
+      tram: { stopX: 0.6, hiddenX: -9, length: 7, height: 2.3, rail: STREET },
+      compactor: { x: 88, w: 5, top: 26, floor: 32 },
+      crane: { pickX: 104, dropX: 98.5, liftY: 17.1, groundY: STREET },
+      zipline,
+      vending: { x: 60.2, y: STREET },
+    },
   };
 }

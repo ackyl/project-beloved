@@ -123,3 +123,72 @@ export function android(
   sprite(r, -1, -2 - liftR, legs.map((row) => row.slice(9)), iconColors);
   c.restore();
 }
+
+// Corpse sprites: powered-off visors (d), stiff poses.
+export const flatArt = [
+  "....................",
+  "..............kk.kk.",
+  ".........kkkkkkykkyk",
+  "..kkkkkkkwwwwwwwwwwk",
+  "kkssyyyykwwykkkkkkwk",
+  "kwwyyyyykwwkddddddkk",
+  "kwwyyyykkwwykkkkkkwk",
+  "kkssyyyykwwwwwwwwwwk",
+  "..kkkkkkkkkkkkkkkkk.",
+  "....................",
+];
+export const cubeArt = [
+  "kkkkkkkkkk",
+  "kwwkkkkwwk",
+  "kwkddddkwk",
+  "kwkkkkkkwk",
+  "kyyyyyyyyk",
+  "kyoyyyysyk",
+  "kyyyyyyyyk",
+  "ksyyyyyysk",
+  "kssssssssk",
+  "kkkkkkkkkk",
+];
+const offVisor = { c: "#2a2724", l: "#3b3632", d: "#2a2724" };
+const tints: Record<string, Record<string, string>> = {
+  none: {},
+  fried: { w: "#d59a55", y: "#a8652f", s: "#6b3b1f", o: "#7a4321", t: "#c98a4a" },
+  wet: { w: "#c6dde6", y: "#93b9cc", s: "#5f7f93", o: "#7c9aac" },
+  zapped: { w: "#6a645d", y: "#4a4540", s: "#2f2b28", o: "#3a3531", t: "#5a5550" },
+  melted: { w: "#f3c08a", y: "#e5964f", s: "#a8582c" },
+  rusty: { w: "#c0794f", y: "#94512f", s: "#6e3a26", o: "#8a4728" },
+  leafy: { w: "#b9d6a3", y: "#7fa866", s: "#4f7444", o: "#5f8a4c" },
+};
+export const corpseColors = (tint = "none") => ({ ...iconColors, ...offVisor, ...(tints[tint] ?? {}) });
+
+export function corpse(c: Brush, x: number, feetY: number, pose: string, tint: string | undefined, facingLeft: boolean) {
+  const colors = corpseColors(tint);
+  c.save();
+  c.translate(Math.round(x), Math.round(feetY));
+  if (facingLeft) c.scale(-1, 1);
+  const r = brush(c);
+  if (pose === "flat") sprite(r, -10, -10, flatArt, colors);
+  else if (pose === "cube") sprite(r, -5, -10, cubeArt, colors);
+  else if (pose === "upside") {
+    c.scale(1, -1);
+    sprite(r, -10, 0, androidArt, colors);
+  } else sprite(r, -10, -18, androidArt, colors);
+  if (tint === "leafy") {
+    r(-2, pose === "flat" ? -12 : -21, 2, 3, "#6f9a5a");
+    r(0, pose === "flat" ? -13 : -22, 3, 2, "#8fbf6a");
+  }
+  c.restore();
+}
+
+/** The android drawn only from the feet up to `fraction` of its height: the replicator printing it. */
+export function printing(c: Brush, x: number, feetY: number, fraction: number) {
+  const h = Math.round(18 * Math.max(0, Math.min(1, fraction)));
+  c.save();
+  c.beginPath();
+  c.rect(Math.round(x) - 11, Math.round(feetY) - h, 22, h);
+  c.clip();
+  const r = brush(c);
+  sprite(r, Math.round(x) - 10, Math.round(feetY) - 18, androidArt, iconColors);
+  c.restore();
+  brush(c)(Math.round(x) - 9, Math.round(feetY) - h - 1, 18, 1, "#fff4d6");
+}

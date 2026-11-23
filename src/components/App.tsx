@@ -1,10 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { command, createGame, type Direction } from "../game/simulation";
+import {
+  command,
+  createGame,
+  drainEvents,
+  type Direction,
+  type Game as GameState,
+  type GameEvent,
+} from "../game/simulation";
+import { prompt } from "../game/interact";
+import { uniqueDeaths } from "../game/death";
+import { BOARD } from "../game/data/deaths";
+import type { LastDeath } from "../game/state";
 import { Sound } from "../game/sound";
 import { isDesktop, readDevice, rememberOverride } from "../platform/device";
 import { DesktopOnly } from "./DesktopOnly";
 import { GameCanvas } from "./GameCanvas";
 import { Icon } from "./Icon";
+import { DeathCard } from "./DeathCard";
+import { DeathBoard } from "./DeathBoard";
 
 const pad = (n: number) => String(n).padStart(3, "0");
 const moveKeys: Record<string, Direction> = {
@@ -19,14 +32,13 @@ const moveKeys: Record<string, Direction> = {
 };
 const jumpKeys = new Set(["Space", "KeyK"]);
 const grabKeys = new Set(["ShiftLeft", "ShiftRight", "KeyJ"]);
+const CARD_MS = 4800;
 
 export function App() {
   const [desktop, setDesktop] = useState(() => isDesktop(readDevice()));
   useEffect(() => {
     const update = () => setDesktop(isDesktop(readDevice()));
-    const queries = ["(pointer: coarse)", "(hover: hover)"].map((q) =>
-      matchMedia(q),
-    );
+    const queries = ["(pointer: coarse)", "(hover: hover)"].map((q) => matchMedia(q));
     window.addEventListener("resize", update);
     queries.forEach((q) => q.addEventListener("change", update));
     return () => {
@@ -46,34 +58,37 @@ export function App() {
   return <Game />;
 }
 
+type Modal = "pause" | "board" | null;
+
 function Game() {
-  const [g] = useState(createGame),
-    [paused, setPaused] = useState(false),
+  const [g] = useState<GameState>(() => createGame()),
+    [modal, setModal] = useState<Modal>(null),
     [sound] = useState(() => new Sound()),
     [audio, setAudio] = useState(false),
-    [reduced, setReduced] = useState(
-      () => matchMedia("(prefers-reduced-motion: reduce)").matches,
-    );
+    [card, setCard] = useState<LastDeath | null>(null),
+    [hint, setHint] = useState<string | null>(null),
+    [, setRevision] = useState(0),
+    [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const dialog = useRef<HTMLDivElement>(null),
-    returnFocus = useRef<HTMLElement | null>(null);
+    returnFocus = useRef<HTMLElement | null>(null),
+    cardTimer = useRef(0);
+  const paused = modal !== null;
 
-  const pause = (next: boolean) => {
-    if (next)
-      returnFocus.current =
-        document.activeElement instanceof HTMLElement
-          ? document.activeElement
-          : null;
-    setPaused(next);
+  const open = (next: Modal) => {
+    if (next && !modal)
+      returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    command(g, { type: "clear" });
+    setModal(next);
   };
 
   useEffect(() => {
-    if (paused) {
-      dialog.current?.querySelector("button")?.focus({ preventScroll: true });
+    if (modal) {
+      dialog.current?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
       return;
     }
     returnFocus.current?.focus({ preventScroll: true });
     returnFocus.current = null;
-  }, [paused]);
+  }, [modal]);
 
   useEffect(() => {
     command(g, { type: "clear" });
@@ -83,22 +98,31 @@ function Game() {
       if (e.key === "Escape") {
         if (down && !e.repeat) {
           e.preventDefault();
-          pause(!paused);
+          open(modal ? null : "pause");
         }
         return;
       }
-      if (paused) return;
+      if (e.code === "Tab") {
+        if (down && !e.repeat && (modal === null || modal === "board")) {
+          e.preventDefault();
+          open(modal ? null : "board");
+        }
+        return;
+      }
+      if (modal) return;
       const dir = moveKeys[e.code];
       if (dir) {
         e.preventDefault();
-        if (!e.repeat)
-          command(g, { type: "move", dir, pressed: down, source: e.code });
+        if (!e.repeat) command(g, { type: "move", dir, pressed: down, source: e.code });
       } else if (jumpKeys.has(e.code)) {
         e.preventDefault();
         if (!e.repeat) command(g, { type: "jump", pressed: down });
       } else if (grabKeys.has(e.code)) {
         e.preventDefault();
         if (down && !e.repeat) command(g, { type: "grab" });
+      } else if (e.code === "KeyE") {
+        e.preventDefault();
+        if (down && !e.repeat) command(g, { type: "interact" });
       }
     };
     window.addEventListener("keydown", key);
@@ -107,7 +131,7 @@ function Game() {
       window.removeEventListener("keydown", key);
       window.removeEventListener("keyup", key);
     };
-  }, [g, paused]);
+  }, [g, modal]);
 
   useEffect(() => {
     const q = matchMedia("(prefers-reduced-motion: reduce)"),
@@ -128,6 +152,56 @@ function Game() {
     };
   }, [sound]);
 
+  useEffect(() => () => window.clearTimeout(cardTimer.current), []);
+
+  const handle = (e: GameEvent) => {
+    switch (e.type) {
+      case "death":
+        sound.death(e.isNew);
+        setCard(e);
+        window.clearTimeout(cardTimer.current);
+        cardTimer.current = window.setTimeout(() => setCard(null), CARD_MS);
+        setRevision((n) => n + 1);
+        return;
+      case "respawn":
+        sound.ding();
+        return;
+      case "bonk":
+        sound.bonk();
+        return;
+      case "jump":
+        sound.jump();
+        return;
+      case "land":
+        sound.land();
+        return;
+      case "grab":
+        sound.grab();
+        return;
+      case "throw":
+        sound.throw();
+        return;
+      case "tramBell":
+        sound.bell();
+        return;
+      case "compactorWarn":
+        sound.warn();
+        return;
+      case "compactorSlam":
+        sound.slam();
+        return;
+      default:
+        return;
+    }
+  };
+
+  const onFrame = () => {
+    for (const e of drainEvents(g)) handle(e);
+    const next = g.phase === "alive" ? prompt(g) : null;
+    if (next !== hint) setHint(next);
+  };
+
+  const found = uniqueDeaths(g);
   return (
     <main className={reduced ? "reduce-motion" : ""}>
       <header className="topbar" inert={paused}>
@@ -139,10 +213,16 @@ function Game() {
             Attempts <b>{pad(g.attempts)}</b>
           </span>
           <span>
-            Human <b>not yet</b>
+            Board <b>{found}/{BOARD.length}</b>
+          </span>
+          <span>
+            Human <b>{g.board.laughing ? "provisionally" : "not yet"}</b>
           </span>
         </p>
         <div className="top-actions">
+          <button className="board-btn" onClick={() => open("board")}>
+            Death Board <kbd>Tab</kbd>
+          </button>
           <button
             className="square"
             title={audio ? "Mute audio" : "Enable audio"}
@@ -159,18 +239,19 @@ function Game() {
           >
             <Icon name={audio ? "sound" : "mute"} />
           </button>
-          <button
-            className="square"
-            title="Pause (Esc)"
-            aria-label="Pause"
-            onClick={() => pause(true)}
-          >
+          <button className="square" title="Pause (Esc)" aria-label="Pause" onClick={() => open("pause")}>
             <Icon name="pause" />
           </button>
         </div>
       </header>
       <section className="viewport" aria-label="The block" inert={paused}>
-        <GameCanvas game={g} paused={paused} reduced={reduced} />
+        <GameCanvas game={g} paused={paused} reduced={reduced} onFrame={onFrame} />
+        {hint ? (
+          <p className="prompt">
+            <kbd>E</kbd> {hint}
+          </p>
+        ) : null}
+        {card ? <DeathCard death={card} /> : null}
         <ul className="legend" aria-label="Controls">
           <li>
             <kbd>A</kbd>
@@ -181,47 +262,39 @@ function Game() {
           </li>
           <li>
             <kbd>W</kbd>
-            <kbd>S</kbd> Ladders, drop down
+            <kbd>S</kbd> Ladders
           </li>
           <li>
             <kbd>Shift</kbd> Grab, throw
           </li>
-          <li className="hint">Hold W to throw up, S to set down</li>
+          <li>
+            <kbd>E</kbd> Use
+          </li>
+          <li className="hint">Hold W to throw up, S to set down or drop below you</li>
         </ul>
         <p className="placeholder-tag">Placeholder art</p>
       </section>
-      {paused && (
-        <div className="scrim">
-          <div
-            className="dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pause-title"
-            ref={dialog}
-          >
-            <div className="dialog-head">
-              <h2 id="pause-title">Paused</h2>
-              <button
-                className="square"
-                aria-label="Close pause menu"
-                onClick={() => pause(false)}
-              >
-                <Icon name="close" />
+      {modal ? (
+        <div className="scrim" ref={dialog}>
+          {modal === "board" ? (
+            <DeathBoard g={g} close={() => open(null)} />
+          ) : (
+            <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+              <div className="dialog-head">
+                <h2 id="pause-title">Paused</h2>
+                <button className="square" aria-label="Close pause menu" onClick={() => open(null)}>
+                  <Icon name="close" />
+                </button>
+              </div>
+              <p>The block holds its breath. The pigeons do not, but they are polite about it.</p>
+              <p className="micro">Motion: {reduced ? "reduced (system setting)" : "full"}</p>
+              <button className="text-button" onClick={() => open(null)}>
+                Resume
               </button>
             </div>
-            <p>
-              The block holds its breath. The pigeons do not, but they are
-              polite about it.
-            </p>
-            <p className="micro">
-              Motion: {reduced ? "reduced (system setting)" : "full"}
-            </p>
-            <button className="text-button" onClick={() => pause(false)}>
-              Resume
-            </button>
-          </div>
+          )}
         </div>
-      )}
+      ) : null}
     </main>
   );
 }

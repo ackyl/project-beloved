@@ -1,7 +1,9 @@
 import type { Game } from "../game/simulation";
+import { tramBox } from "../game/props";
 import { INTERIOR, isSolid, tileAt, type Decor, type Level } from "../game/level/level";
 import { bottom, centerX } from "../game/physics";
-import { android, brush, glow, poly, type Brush, type Pose, type Rect } from "./pixels";
+import { android, brush, corpse, glow, poly, printing, type Brush, type Pose, type Rect } from "./pixels";
+import { PRINT_TICKS } from "../game/balance";
 
 // Side-view renderer: sky and parallax skyline, cutaway building, tiles, decor,
 // props and the android. Placeholder art drawn in code; no neon.
@@ -195,16 +197,24 @@ function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: n
       plant(r, x, y - 25, 8);
       r(x + 2, y - 33, 3, 3, "#d2563f");
       return;
-    case "noodleCart":
+    case "noodleCart": {
       r(x - 16, y - 18, 32, 14, "#c7684d");
-      r(x - 18, y - 30, 36, 4, "#f0dca0");
-      for (let i = 0; i < 6; i++) r(x - 18 + i * 6, y - 26, 3, 3, i % 2 ? "#f0dca0" : "#c7684d");
-      r(x - 16, y - 26, 1, 8, palette.trim);
-      r(x + 15, y - 26, 1, 8, palette.trim);
+      r(x - 16, y - 18, 32, 2, "#e08a64");
+      r(x - 18, y - 48, 36, 4, "#f0dca0");
+      for (let i = 0; i < 6; i++) r(x - 18 + i * 6, y - 44, 3, 3, i % 2 ? "#f0dca0" : "#c7684d");
+      r(x - 16, y - 44, 1, 26, palette.trim);
+      r(x + 15, y - 44, 1, 26, palette.trim);
+      // The fryer: a very hot pot.
+      r(x - 11, y - 27, 22, 9, "#3b332e");
+      r(x - 10, y - 28, 20, 2, "#e8a640");
+      const bubble = reduced ? 0 : Math.floor(t / 9) % 4;
+      r(x - 7 + bubble * 3, y - 30, 2, 2, "#f6cf6e");
+      r(x + 4 - bubble, y - 29, 2, 1, "#f6cf6e");
+      glow(c, x, y - 28, 14, "255,190,110", 0.3);
       r(x - 10, y - 4, 4, 4, "#3b332e");
       r(x + 6, y - 4, 4, 4, "#3b332e");
-      glow(c, x, y - 20, 14, "255,200,150", 0.25);
       return;
+    }
     case "vending":
       r(x - 9, y - 30, 18, 30, "#d65f49");
       r(x - 7, y - 27, 10, 18, "#f1e6cf");
@@ -224,13 +234,99 @@ function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: n
       r(x - 6, y - 39, 12, 1, palette.trim);
       r(x - 6, y - 36, 8, 1, palette.trim);
       return;
-    case "compactor":
-      r(x - 40, y - 4, 80, 4, "#4c4843");
-      r(x - 40, y - 52, 4, 48, "#55504a");
-      r(x + 36, y - 52, 4, 48, "#55504a");
-      r(x - 38, y - 56, 76, 6, "#d29a3d");
-      for (let i = 0; i < 9; i++) r(x - 36 + i * 8, y - 55, 4, 4, "#3b332e");
+    case "compactor": {
+      const top = y - 8 * T;
+      r(x - 42, top, 4, 8 * T, "#55504a");
+      r(x + 38, top, 4, 8 * T, "#55504a");
+      r(x - 44, top - 6, 88, 6, "#d29a3d");
+      for (let i = 0; i < 10; i++) r(x - 42 + i * 8, top - 5, 4, 4, "#3b332e");
       return;
+    }
+    case "compactorButton":
+      r(x - 1, y - 14, 3, 14, "#55504a");
+      r(x - 4, y - 19, 9, 6, "#3b332e");
+      r(x - 2, y - 18, 5, 4, "#e05a45");
+      return;
+    case "canal": {
+      const x2 = Math.round((d.x2 ?? d.x) * T - camX);
+      r(x, y + 5, x2 - x, 2 * T - 5, "#5f8f9d");
+      r(x, y + 5, x2 - x, 2, "#9cc7cf");
+      for (let i = 0; i < (x2 - x) / 8; i++)
+        if ((i + Math.floor(t / 20)) % 3 === 0) r(x + i * 8 + 2, y + 10 + (i % 2) * 6, 4, 1, "#9cc7cf");
+      return;
+    }
+    case "powerStrip":
+      r(x - 6, y - 4, 12, 4, "#e9e1cf");
+      r(x - 4, y - 3, 2, 2, "#3b332e");
+      r(x + 1, y - 3, 2, 2, "#3b332e");
+      r(x - 8, y - 2, 2, 2, "#3b332e");
+      r(x - 9, y - 22, 1, 20, "#3b332e");
+      r(x - 14, y - 26, 10, 6, "#f0dca0");
+      r(x - 13, y - 24, 8, 1, "#d65f49");
+      return;
+    case "powerline": {
+      const x2 = Math.round((d.x2 ?? d.x) * T - camX),
+        ground = Math.round(30 * T - camY);
+      for (const px of [x, x2]) {
+        r(px - 1, y - 6, 3, ground - y + 6, "#5b524b");
+        r(px - 5, y - 6, 11, 2, "#5b524b");
+        r(px - 4, y - 4, 2, 3, "#c7d9cf");
+        r(px + 3, y - 4, 2, 3, "#c7d9cf");
+      }
+      c.strokeStyle = "#2f2b28";
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(x, y);
+      c.quadraticCurveTo((x + x2) / 2, y + 3, x2, y);
+      c.stroke();
+      if (!reduced && Math.floor(t / 7) % 9 === 0) r((x + x2) / 2 + ((t * 7) % 20) - 10, y + 1, 2, 2, "#ffe58a");
+      r(x + 6, y + 8, 18, 6, "#f0dca0");
+      r(x + 8, y + 10, 14, 1, "#d65f49");
+      return;
+    }
+    case "planterBox":
+      r(x - 18, y - 9, 36, 9, "#9a6a48");
+      r(x - 18, y - 9, 36, 2, "#b98457");
+      r(x - 16, y - 11, 32, 3, "#5a4636");
+      for (const dx of [-13, -6, 8, 14]) {
+        r(x + dx, y - 17, 2, 7, palette.leaf);
+        r(x + dx - 2, y - 15, 3, 2, palette.leafDark);
+      }
+      r(x - 1, y - 12, 6, 1, "#7a5a44");
+      return;
+    case "drip": {
+      const top = y - 3 * T;
+      r(x - 14, top, 18, 3, "#7a8f8a");
+      r(x + 2, top, 3, 8, "#7a8f8a");
+      const fall = reduced ? 10 : (t * 2) % 40;
+      r(x + 3, top + 8 + fall, 1, 2, "#9cc7cf");
+      r(x - 6, y - 7, 12, 7, palette.pot);
+      r(x - 4, y - 11, 8, 4, palette.leaf);
+      return;
+    }
+    case "mirrors": {
+      const spots = [
+        [-2.9, 27],
+        [2.4, 27],
+        [5.5, 30],
+        [8, 30],
+      ];
+      for (const [dx, my] of spots) {
+        const mx = Math.round((d.x + dx) * T - camX),
+          mY = Math.round(my * T - camY);
+        c.strokeStyle = "rgba(255,226,150,0.35)";
+        c.lineWidth = 1;
+        c.beginPath();
+        c.moveTo(mx, mY - 12);
+        c.lineTo(x, y);
+        c.stroke();
+        r(mx - 1, mY - 8, 2, 8, "#5b524b");
+        r(mx - 5, mY - 16, 10, 8, "#cfe3ea");
+        r(mx - 4, mY - 15, 3, 6, "#ffffff");
+      }
+      glow(c, x, y, 16, "255,230,160", 0.4 + (reduced ? 0 : Math.sin(t / 12) * 0.08));
+      return;
+    }
     case "crane": {
       const top = Math.round((d.y2 ?? 16) * T - camY),
         hookX = Math.round((d.x2 ?? d.x) * T - camX);
@@ -265,6 +361,11 @@ function drawProp(r: Rect, kind: string, x: number, y: number, w: number, h: num
       r(x - 1, y, w + 2, 3, "#d27b5d");
       r(x + 2, y - 4, w - 4, 4, palette.leaf);
       return;
+    case "cube":
+      r(x, y, w, h, "#7d6f62");
+      r(x + 1, y + 1, w - 2, 2, "#9a5d3c");
+      r(x + 2, y + h - 3, w - 4, 1, "#5c524a");
+      return;
     case "tire":
       r(x, y, w, h, "#3b3632");
       r(x + 3, y + 2, w - 6, h - 4, "#58514b");
@@ -282,11 +383,14 @@ export function scene() {
       t = g.ticks,
       level = g.level,
       p = g.player;
-    // Camera follows the player and stays inside the level.
+    // Camera follows the player, or the fresh body while dead.
+    const dead = g.phase === "dead" && g.last;
+    const focusX = dead ? g.last!.x : centerX(p),
+      focusY = dead ? g.last!.y : bottom(p);
     const maxX = Math.max(0, level.w * T - w),
       maxY = Math.max(0, level.h * T - h);
-    const tx = Math.min(maxX, Math.max(0, centerX(p) * T - w / 2)),
-      ty = Math.min(maxY, Math.max(0, bottom(p) * T - h * 0.68));
+    const tx = Math.min(maxX, Math.max(0, focusX * T - w / 2)),
+      ty = Math.min(maxY, Math.max(0, focusY * T - h * 0.68));
     if (!cam.ready || reduced) {
       cam.x = tx;
       cam.y = ty;
@@ -297,6 +401,10 @@ export function scene() {
     }
     const camX = Math.round(cam.x),
       camY = Math.round(cam.y);
+    view.camX = camX;
+    view.camY = camY;
+    view.w = w;
+    view.h = h;
 
     // Sky, sun and parallax skyline.
     const sky = c.createLinearGradient(0, 0, 0, h);
@@ -321,22 +429,88 @@ export function scene() {
       for (let xx = x0; xx <= x1; xx++)
         drawTile(r, level, xx, yy, xx * T - camX, yy * T - camY);
     for (const d of level.decor) drawDecor(c, r, d, camX, camY, t, reduced);
+    drawMachines(c, r, g, camX, camY, t, reduced);
 
-    // Props, then the player, then the carried prop above the head.
+    // Props and bodies, then the player, then the carried thing above the head.
     const held = p.holding;
-    for (const b of g.bodies)
-      if (b.id !== held)
-        drawProp(r, b.kind, Math.round(b.x * T - camX), Math.round(b.y * T - camY), Math.round(b.w * T), Math.round(b.h * T));
-    const pose: Pose = p.climbing
-      ? "climb"
-      : !p.grounded
-        ? "air"
-        : Math.abs(p.vx) > 0.4
-          ? "walk"
-          : "idle";
-    android(c, centerX(p) * T - camX, bottom(p) * T - camY, p.facing < 0, pose === "climb" && p.vy === 0 ? 0 : t, pose, reduced);
-    for (const b of g.bodies)
-      if (b.id === held)
-        drawProp(r, b.kind, Math.round(b.x * T - camX), Math.round(b.y * T - camY), Math.round(b.w * T), Math.round(b.h * T));
+    const drawBody = (b: Game["bodies"][number]) => {
+      const bx = Math.round(b.x * T - camX),
+        by = Math.round(b.y * T - camY),
+        bw = Math.round(b.w * T),
+        bh = Math.round(b.h * T);
+      if (b.kind === "corpse")
+        corpse(c, (b.x + b.w / 2) * T - camX, (b.y + b.h) * T - camY, b.pose ?? "flat", b.tint, (b.attempt ?? 0) % 2 === 1);
+      else drawProp(r, b.kind, bx, by, bw, bh);
+    };
+    for (const b of g.bodies) if (b.id !== held || g.phase !== "alive") drawBody(b);
+    if (g.phase === "alive") {
+      const pose: Pose = p.climbing ? "climb" : !p.grounded ? "air" : Math.abs(p.vx) > 0.4 ? "walk" : "idle";
+      android(c, centerX(p) * T - camX, bottom(p) * T - camY, p.facing < 0, pose === "climb" && p.vy === 0 ? 0 : t, pose, reduced);
+      const lastBonk = p.bonks.at(-1);
+      if (lastBonk && t - lastBonk.tick < 24)
+        for (let i = 0; i < 3; i++) {
+          const a = t / 5 + (i * Math.PI * 2) / 3;
+          r(centerX(p) * T - camX + Math.cos(a) * 8 - 1, p.y * T - camY - 4 + Math.sin(a) * 2, 2, 2, "#ffe58a");
+        }
+    } else if (g.phase === "printing") {
+      glow(c, centerX(p) * T - camX, bottom(p) * T - camY - 14, 28, "255,240,200", 0.5);
+      printing(c, centerX(p) * T - camX, bottom(p) * T - camY, g.phaseTicks / PRINT_TICKS);
+    }
+    for (const b of g.bodies) if (b.id === held && g.phase === "alive") drawBody(b);
+
+    // Death sparks and loose bolts, computed from time since death.
+    if (dead && g.phaseTicks < 45 && !reduced) {
+      const ox = g.last!.x * T - camX,
+        oy = (g.last!.y - 0.6) * T - camY,
+        s = g.phaseTicks / 60;
+      for (let i = 0; i < 16; i++) {
+        const a = hash(i, g.last!.attempt) * Math.PI * 2,
+          v = 3 + hash(i + 7, g.last!.attempt) * 5;
+        const px = ox + Math.cos(a) * v * s * T,
+          py = oy + (Math.sin(a) * v * s - 0.5 * -18 * s * s) * T;
+        r(px, py, 2, 2, i % 3 ? "#ffd27a" : "#8e8a80");
+      }
+    }
   };
+}
+
+/** Shared with the DOM shell so it can place speech bubbles over the canvas. */
+export const view = { camX: 0, camY: 0, w: 1, h: 1 };
+
+function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t: number, reduced: boolean) {
+  const tram = tramBox(g);
+  if (tram) {
+    const x = Math.round(tram.x * T - camX),
+      y = Math.round(tram.y * T - camY),
+      w = Math.round(tram.w * T),
+      h = Math.round(tram.h * T);
+    r(x, y + 4, w, h - 8, "#e6cf9b");
+    r(x, y + h - 12, w, 4, "#6f9e95");
+    r(x + 2, y, w - 4, 5, "#c9b07c");
+    for (let i = 0; i < Math.floor(w / 14); i++) {
+      r(x + 6 + i * 14, y + 9, 9, 10, "#5d4a44");
+      r(x + 7 + i * 14, y + 10, 7, 8, i % 3 ? "#f4c77f" : "#a9cbd8");
+    }
+    r(x + w - 6, y + 8, 4, 22, "#c7684d");
+    r(x + 10, y - 10, 1, 10, "#3b332e");
+    r(x + 6, y - 11, 10, 1, "#3b332e");
+    for (const wx of [x + 8, x + w - 18]) r(wx, y + h - 4, 10, 4, "#3b332e");
+  }
+  const m = g.level.machines.compactor,
+    k = g.compactor;
+  if (m && k) {
+    const x = Math.round(m.x * T - camX),
+      w = Math.round(m.w * T),
+      plate = Math.round(k.plate * T - camY),
+      top = Math.round((m.floor - 8) * T - camY);
+    r(x + w / 2 - 3, top, 6, plate - 8 - top, "#8e8a80");
+    r(x, plate - 8, w, 8, "#6e6a62");
+    r(x, plate - 2, w, 2, "#3b332e");
+    for (let i = 0; i < w / 8; i++) r(x + i * 8 + 2, plate - 6, 4, 2, "#d29a3d");
+    if (k.phase === "warning" && (reduced || Math.floor(t / 8) % 2)) {
+      r(x - 6, top - 12, 5, 5, "#e05a45");
+      r(x + w + 1, top - 12, 5, 5, "#e05a45");
+      glow(c, x + w / 2, top - 10, 30, "240,110,80", 0.35);
+    }
+  }
 }

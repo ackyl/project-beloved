@@ -49,8 +49,50 @@ export class Sound {
       v.disconnect();
     };
   }
-  /** Soft UI confirmation. Chunk 4 adds death stingers and the replicator ding. */
+  /** Soft UI confirmation. */
   blip() {
     this.tone(520, 0.08, 0.02);
+  }
+  jump() {
+    this.tone(330, 0.09, 0.018, 0, "triangle", 520);
+  }
+  land() {
+    this.tone(120, 0.08, 0.03, 0, "triangle", 60);
+  }
+  grab() {
+    this.tone(260, 0.05, 0.02, 0, "square", 320);
+  }
+  throw() {
+    this.tone(420, 0.12, 0.018, 0, "triangle", 200);
+  }
+  bonk() {
+    this.tone(700, 0.06, 0.03, 0, "square", 350);
+    this.tone(500, 0.08, 0.02, 0.06, "square", 260);
+  }
+  /** A comic slide-whistle and clunk. New deaths get a little fanfare on top. */
+  death(isNew: boolean) {
+    this.tone(880, 0.45, 0.03, 0, "triangle", 140);
+    this.tone(90, 0.16, 0.05, 0.42, "square", 50);
+    if (isNew)
+      [0, 0.12, 0.24].forEach((at, i) => this.tone([523, 659, 784][i], 0.16, 0.025, 0.7 + at, "triangle"));
+  }
+  ding() {
+    this.tone(1046, 0.5, 0.025);
+    this.tone(1568, 0.4, 0.012, 0.02);
+  }
+  bell() {
+    this.tone(1318, 0.25, 0.02, 0, "triangle");
+    this.tone(1318, 0.25, 0.02, 0.3, "triangle");
+  }
+  warn() {
+    this.tone(440, 0.15, 0.02, 0, "square");
+    this.tone(440, 0.15, 0.02, 0.3, "square");
+  }
+  slam() {
+    this.tone(70, 0.3, 0.06, 0, "square", 35);
+  }
+  speak() {
+    this.tone(600, 0.04, 0.012, 0, "triangle", 680);
+    this.tone(560, 0.04, 0.012, 0.06, "triangle", 500);
   }
 }

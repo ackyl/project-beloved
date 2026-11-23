@@ -7,6 +7,7 @@
 - Side-view platformer with gravity. Walk, jump (with about 0.1 s of coyote time and a jump buffer), climb ladders, and drop through one-way platforms by pressing down.
 - **Grab:** pick up the nearest prop or body in front of you (or under your feet), carry it above your head, then throw it or set it down. Grab again to throw forward. Hold up while grabbing to throw high, or hold down to set it down at your feet. Throws follow deterministic arcs.
 - **Props and bodies are solid from above only.** You and other props can stand and stack on them, but you walk through them sideways and they fall through you. This keeps stacking stable and avoids pushing physics. Take something away from the bottom of a stack and everything above it falls.
+- **Dropping below you:** in the air, hold down and grab to drop what you carry straight under your feet, then land on it. That is how towers of old bodies get built.
 - **Placement is always valid.** A released prop goes to the first free spot: where it was carried (when throwing) or in front of your feet (when setting down). If that spot is blocked, it goes inside your own box, which is always free.
 - **Interact (E):** talk to neighbours and use objects like the vending machine, crane controls, fryer or replicator.
 - **Controls:** A/D or arrow keys to move, W/Up to climb, S/Down to climb down or drop through a platform, Space or K to jump, Shift or J to grab and throw, E to interact, Tab for the Death Board, Esc to pause. Gamepad support is optional.

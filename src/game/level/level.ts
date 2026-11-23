@@ -8,7 +8,7 @@
 //
 // The top of a ladder column also acts as a one-way platform, so you can stand
 // at the top of a ladder and walk off it.
-export type PropKind = "crate" | "pot" | "tire";
+export type PropKind = "crate" | "pot" | "tire" | "cube";
 export type Point = { x: number; y: number };
 export type DecorKind =
   | "replicator"
@@ -26,8 +26,48 @@ export type DecorKind =
   | "tramSign"
   | "crane"
   | "compactor"
-  | "laundry";
+  | "laundry"
+  | "canal"
+  | "powerStrip"
+  | "powerline"
+  | "planterBox"
+  | "drip"
+  | "mirrors"
+  | "compactorButton";
 export type Decor = { kind: DecorKind; x: number; y: number; x2?: number; y2?: number };
+export type Rect = { x: number; y: number; w: number; h: number };
+export type ZoneKind =
+  | "fryer"
+  | "canal"
+  | "solar"
+  | "drip"
+  | "powerline"
+  | "pellCart"
+  | "outdoors";
+export type Zone = Rect & { kind: ZoneKind };
+export type InteractKind =
+  | "vending"
+  | "powerStrip"
+  | "planter"
+  | "zipline"
+  | "compactorButton"
+  | "deathBoard"
+  | "neighbour";
+export type Interactable = { kind: InteractKind; x: number; y: number; id?: string };
+export type NeighbourId = "pell" | "rook" | "bas" | "juniper";
+export type NeighbourSpot = { id: NeighbourId; x: number; y: number };
+export type Machines = {
+  /** Tram on the west street: left edge when stopped, length, height, rail (bottom). */
+  tram?: { stopX: number; hiddenX: number; length: number; height: number; rail: number };
+  /** Compactor over a pit: plate rests with its bottom at `top`, slams to `floor`. */
+  compactor?: { x: number; w: number; top: number; floor: number };
+  /** Magnet crane: picks up at pickX, carries along the gantry at liftY, drops at dropX. */
+  crane?: { pickX: number; dropX: number; liftY: number; groundY: number };
+  /** Zip line from the roof to the tram stop sign. */
+  zipline?: { x1: number; y1: number; x2: number; y2: number };
+  /** Vending machine footprint (feet centre). */
+  vending?: { x: number; y: number };
+};
 export interface Level {
   name: string;
   w: number;
@@ -38,6 +78,12 @@ export interface Level {
   /** Props: feet centre, in tiles. */
   props: { kind: PropKind; x: number; y: number }[];
   decor: Decor[];
+  zones: Zone[];
+  /** Extra one-way surfaces that are not tiles, like a dumpster lid. */
+  ledges: Rect[];
+  interactables: Interactable[];
+  neighbours: NeighbourSpot[];
+  machines: Machines;
 }
 
 const SOLID = new Set(["#", "B", "M"]);
@@ -71,7 +117,20 @@ export function parseLevel(
   const w = rows[0].length;
   if (rows.some((r) => r.length !== w))
     throw new Error(`${name}: rows must have equal length`);
-  return { name, w, h: rows.length, rows, spawn, props, decor };
+  return {
+    name,
+    w,
+    h: rows.length,
+    rows,
+    spawn,
+    props,
+    decor,
+    zones: [],
+    ledges: [],
+    interactables: [],
+    neighbours: [],
+    machines: {},
+  };
 }
 
 /** Small helper for authoring larger levels with rectangles. */

@@ -8,14 +8,16 @@ export function GameCanvas({
   game,
   paused,
   reduced,
+  onFrame,
 }: {
   game: Game;
   paused: boolean;
   reduced: boolean;
+  onFrame: () => void;
 }) {
   const ref = useRef<HTMLCanvasElement>(null),
-    latest = useRef({ paused, reduced });
-  latest.current = { paused, reduced };
+    latest = useRef({ paused, reduced, onFrame });
+  latest.current = { paused, reduced, onFrame };
   useEffect(() => {
     const canvas = ref.current!,
       ctx = canvas.getContext("2d")!,
@@ -54,6 +56,7 @@ export function GameCanvas({
       } else acc = 0;
       last = now;
       draw(ctx, game, latest.current.reduced);
+      latest.current.onFrame();
       id = requestAnimationFrame(frame);
     };
     id = requestAnimationFrame(frame);
