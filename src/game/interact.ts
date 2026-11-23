@@ -6,6 +6,7 @@ import { runCompactor } from "./machines";
 import { bottom, centerX } from "./physics";
 import { emit, type Game } from "./state";
 import { heldBody } from "./props";
+import { readPaper } from "./twist";
 
 type Target = Interactable | { kind: "crumbs"; x: number; y: number };
 
@@ -61,7 +62,7 @@ export function prompt(g: Game): string | null {
     case "compactorButton":
       return g.compactor?.phase === "idle" ? "Run the compactor" : null;
     case "deathBoard":
-      return "Read the Death Board";
+      return g.twist === 2 && !g.board.laughing ? "Read the paper Rook pinned up" : "Read the Death Board";
     case "neighbour":
       return `Talk to ${NEIGHBOURS[t.id as NeighbourId].name}`;
     case "crumbs":
@@ -116,7 +117,7 @@ export function interact(g: Game) {
       if (runCompactor(g)) say(g, "bas", "Oi! Who pressed that?");
       return;
     case "deathBoard":
-      emit(g, { type: "openBoard" });
+      if (!readPaper(g)) emit(g, { type: "openBoard" });
       return;
     case "neighbour": {
       const id = t.id as NeighbourId;

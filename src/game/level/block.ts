@@ -113,6 +113,7 @@ export function buildBlock(): Level {
     interactables: [
       { kind: "zipline", x: zipline.x1, y: 17 },
       { kind: "powerStrip", x: 47.3, y: STREET },
+      { kind: "vending", x: 60.2, y: STREET },
       { kind: "planter", x: 34.6, y: 18 },
       { kind: "compactorButton", x: 94.2, y: STREET },
       { kind: "deathBoard", x: 34.5, y: STREET },

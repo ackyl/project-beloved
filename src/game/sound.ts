@@ -91,6 +91,13 @@ export class Sound {
   slam() {
     this.tone(70, 0.3, 0.06, 0, "square", 35);
   }
+  coo() {
+    this.tone(380, 0.18, 0.012, 0, "sine", 300);
+    this.tone(340, 0.22, 0.012, 0.22, "sine", 280);
+  }
+  laugh() {
+    [0, 0.14, 0.28, 0.42].forEach((at, i) => this.tone(520 + i * 40, 0.1, 0.02, at, "triangle", 420));
+  }
   speak() {
     this.tone(600, 0.04, 0.012, 0, "triangle", 680);
     this.tone(560, 0.04, 0.012, 0.06, "triangle", 500);

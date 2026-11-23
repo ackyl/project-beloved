@@ -23,7 +23,7 @@ Hazard events, the freeze-and-sparks transition, corpse entities (stacking, grab
 The authored Building, Street and Scrapyard; four neighbours with state-keyed lines; Rook's ratings and hints; and the remaining 12 deaths, including the corpse-based and secret ones.
 **Tests:** every death is reachable from spawn, using simulated journeys driven by scripted input; neighbour lines resolve for every state.
 
-## Chunk 4: Twist, save and feel
+## Chunk 4: Twist, save and feel ✅
 
 The feedstock and twist sequence, the permanent mismatched parts, the Died Laughing card and the rooftop party; local save; audio (death stingers, the replicator ding, ambient street sounds); and a polish pass.
 **Tests:** the twist fires once at the threshold; a save round-trip matches the live state; a corrupt or old save falls back cleanly; storage that throws doesn't break play.

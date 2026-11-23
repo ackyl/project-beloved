@@ -436,3 +436,79 @@ kbd {
 .bubble.you b {
   color: #4d7a9c;
 }
+
+.status .warn b {
+  color: #f08a6c;
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.text-button.quiet {
+  color: var(--paper);
+  background: transparent;
+  border: 1px solid var(--line);
+}
+.text-button.danger {
+  color: #fff;
+  background: #b5503c;
+}
+.dark {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  padding: 24px;
+  background: #0d0b0a;
+  text-align: center;
+}
+.dark p {
+  max-width: 520px;
+  font-size: 17px;
+  line-height: 1.4;
+  color: #b9aa96;
+  animation: card-in 0.6s ease-out;
+}
+.dark b {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6f5d4e;
+}
+.paper-reveal {
+  width: min(560px, 100%);
+  text-align: center;
+  justify-items: center;
+}
+.paper {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  font: 700 30px/1.1 "Space Mono", monospace;
+}
+.paper .half {
+  padding: 10px 14px;
+  color: var(--ink);
+  background: #f4ecd8;
+  clip-path: polygon(0 0, 100% 0, 96% 20%, 100% 40%, 95% 60%, 100% 80%, 97% 100%, 0 100%);
+}
+.paper .rook-half {
+  background: #fffaf0;
+  clip-path: polygon(3% 0, 100% 0, 100% 100%, 4% 100%, 0 80%, 5% 60%, 0 40%, 4% 20%);
+  animation: paper-in 0.8s ease-out;
+}
+@keyframes paper-in {
+  from {
+    transform: translateX(40px) rotate(4deg);
+    opacity: 0;
+  }
+}
+.death-card.twist {
+  outline-color: #8fbfb3;
+}

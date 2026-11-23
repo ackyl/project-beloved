@@ -6,6 +6,24 @@ export const stars = (n: number) => "★".repeat(n) + "☆".repeat(5 - n);
 
 export function DeathCard({ death }: { death: LastDeath }) {
   const def = death.id ? deathById[death.id] : null;
+  if (def?.twist)
+    return (
+      <div className="death-card new twist" role="status">
+        <p className="card-top">
+          <span>Not an attempt</span>
+          <b className="badge">New</b>
+        </p>
+        <h2>
+          <span className="num">#{def.n}</span>
+          {def.name}
+        </h2>
+        <p className="joke">{def.joke}</p>
+        <p className="rook">
+          <span>Rook:</span> <b className="stars">{stars(5)}</b> obviously.
+        </p>
+        <p className="log">Human: provisionally confirmed. Learned: {def.learned}</p>
+      </div>
+    );
   return (
     <div className={`death-card${death.isNew ? " new" : ""}`} role="status">
       <p className="card-top">

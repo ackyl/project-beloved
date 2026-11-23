@@ -2,6 +2,7 @@ import { DEATH_TICKS, JUMP_BUFFER_TICKS, SKIP_AFTER, STEP } from "./balance";
 import { finishPrinting, respawn } from "./death";
 import { checkHazards, updateCompactor, updateCrane, updateTram, updateVending } from "./machines";
 import { controlled, updateKindness, updateStunts } from "./stunts";
+import { afterDeath, updateDark, updateParty } from "./twist";
 import { updatePlayer } from "./player";
 import { grabOrThrow, updateBodies } from "./props";
 import { interact } from "./interact";
@@ -73,6 +74,11 @@ export function tick(g: Game) {
     updateBodies(g);
     checkHazards(g, fall);
     updateStunts(g);
+  } else if (g.phase === "twist") {
+    g.input.grabQueued = false;
+    g.input.interactQueued = false;
+    updateBodies(g);
+    updateDark(g);
   } else {
     g.input.grabQueued = false;
     g.input.interactQueued = false;
@@ -86,6 +92,8 @@ export function tick(g: Game) {
   updateCrane(g);
   updateVending(g);
   updateKindness(g);
+  updateParty(g);
+  if (g.phase === "dead" && g.phaseTicks === 1) afterDeath(g);
 }
 
 export const seconds = (g: Game) => g.ticks * STEP;

@@ -50,7 +50,7 @@ export type Player = Box & {
   zip: number;
 };
 
-export type Phase = "alive" | "dead" | "printing";
+export type Phase = "alive" | "dead" | "printing" | "twist";
 
 export type LastDeath = {
   attempt: number;
@@ -161,9 +161,14 @@ export function createGame(level: Level = buildBlock()) {
         }
       : null,
     talks: { pell: 0, rook: 0, bas: 0, juniper: 0 } as Record<NeighbourId, number>,
-    /** 0 before the twist, 1 while feedstock is low, 2 after it. */
+    /** 0 before the twist, 1 while feedstock is low, 1.5 in the dark, 2 after it. */
     twist: 0,
-    twistTicks: 0,
+    /** The attempt that made feedstock run low; the next death is the dark one. */
+    twistAttempt: 0,
+    /** Rebuilt from the neighbours' things: permanent and cosmetic. */
+    rebuilt: false,
+    /** Ticks since the rooftop party started, or 0. */
+    party: 0,
     vending: m.vending
       ? { shakes: 0, phase: "up" as "up" | "tipping" | "down", timer: 0, dir: 1 as 1 | -1 }
       : null,

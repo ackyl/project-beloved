@@ -3,7 +3,7 @@ import { tramBox } from "../game/props";
 import { INTERIOR, isSolid, tileAt, type Decor, type Level } from "../game/level/level";
 import { bottom, centerX } from "../game/physics";
 import { android, brush, corpse, glow, poly, printing, type Brush, type Pose, type Rect } from "./pixels";
-import { KINDNESS_TICKS, PIGEON_GATHER_TICKS, PRINT_TICKS, SOLAR_TICKS } from "../game/balance";
+import { KINDNESS_TICKS, PARTY_TICKS, PIGEON_GATHER_TICKS, PRINT_TICKS, SOLAR_TICKS } from "../game/balance";
 
 // Side-view renderer: sky and parallax skyline, cutaway building, tiles, decor,
 // props and the android. Placeholder art drawn in code; no neon.
@@ -145,7 +145,7 @@ function laundry(c: Brush, r: Rect, x1: number, y1: number, x2: number, y2: numb
   }
 }
 
-function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: number, reduced: boolean) {
+function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: number, reduced: boolean, g: Game) {
   const x = Math.round(d.x * T - camX),
     y = Math.round(d.y * T - camY);
   switch (d.kind) {
@@ -156,12 +156,23 @@ function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: n
       r(x - 5, y - 30, 10, 10, "#e8faf3");
       r(x - 10, y - 3, 20, 3, palette.trim);
       r(x - 3, y - 38, 6, 4, "#7f9c96");
+      if (g.twist === 1 || g.twist === 1.5) {
+        if (reduced || Math.floor(t / 20) % 2) r(x - 2, y - 37, 4, 2, "#e05a45");
+        glow(c, x, y - 36, 12, "240,110,80", 0.4);
+      }
+      if (g.rebuilt) r(x + 6, y - 20, 3, 5, "#d27b5d");
       return;
     case "deathBoard":
       r(x - 18, y - 22, 36, 22, palette.trim);
       r(x - 16, y - 20, 32, 18, "#c9a16f");
       for (let i = 0; i < 4; i++) r(x - 14 + i * 8, y - 17 + (i % 2) * 3, 6, 7, "#f4efe3");
       r(x - 16, y - 26, 32, 3, "#f0e3c6");
+      if (g.twist >= 2) {
+        r(x + 8, y - 21, 10, 6, "#fffaf0");
+        r(x + 9, y - 19, 7, 1, "#3b332e");
+        r(x + 9, y - 17, 5, 1, "#3b332e");
+        r(x + 12, y - 22, 2, 2, "#e05a45");
+      }
       return;
     case "sofa":
       r(x - 18, y - 12, 36, 8, "#7d9f93");
@@ -426,7 +437,8 @@ export function scene() {
     for (let yy = y0; yy <= y1; yy++)
       for (let xx = x0; xx <= x1; xx++)
         drawTile(r, level, xx, yy, xx * T - camX, yy * T - camY);
-    for (const d of level.decor) drawDecor(c, r, d, camX, camY, t, reduced);
+    for (const d of level.decor) drawDecor(c, r, d, camX, camY, t, reduced, g);
+    if (g.board.laughing) drawBunting(c, camX, camY, t, reduced);
     drawMachines(c, r, g, camX, camY, t, reduced);
 
     // Props and bodies, then the player, then the carried thing above the head.
@@ -447,6 +459,7 @@ export function scene() {
         py = bottom(p) * T - camY;
       if (p.heat > 0) glow(c, px, py - 9, 22, "255,170,90", Math.min(0.7, p.heat / SOLAR_TICKS));
       android(c, px, py, p.facing < 0, pose === "climb" && p.vy === 0 ? 0 : t, pose, reduced);
+      if (g.rebuilt) rebuiltParts(r, px, py, p.facing < 0);
       if (p.zip) {
         r(px - 1, py - 26, 2, 8, "#5b4a40");
         r(px - 4, py - 27, 8, 2, "#5b4a40");
@@ -486,9 +499,17 @@ export function scene() {
     } else if (g.phase === "printing") {
       glow(c, centerX(p) * T - camX, bottom(p) * T - camY - 14, 28, "255,240,200", 0.5);
       printing(c, centerX(p) * T - camX, bottom(p) * T - camY, g.phaseTicks / PRINT_TICKS);
+      if (g.rebuilt && g.phaseTicks >= PRINT_TICKS - 2) rebuiltParts(r, centerX(p) * T - camX, bottom(p) * T - camY, p.facing < 0);
     }
     for (const b of g.bodies) if (b.id === held && g.phase === "alive") drawBody(b);
 
+    // Rooftop party confetti.
+    if (g.party && g.party < PARTY_TICKS && !reduced)
+      for (let i = 0; i < 40; i++) {
+        const fx = (hash(i, 3) * w + Math.sin(t / 30 + i) * 12) % w,
+          fy = ((hash(i, 9) * h + t * (0.6 + hash(i, 5))) % h);
+        r(fx, fy, 2, 3, palette.cloth[i % palette.cloth.length]);
+      }
     // Death sparks and loose bolts, computed from time since death.
     if (dead && g.phaseTicks < 45 && !reduced) {
       const ox = g.last!.x * T - camX,
@@ -622,5 +643,36 @@ function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t:
       r(x + w + 1, top - 12, 5, 5, "#e05a45");
       glow(c, x + w / 2, top - 10, 30, "240,110,80", 0.35);
     }
+  }
+}
+
+/** Pot-lid cheek from Pell, a toy arm from Rook, a sprouting shoulder from Juniper. */
+function rebuiltParts(r: Rect, x: number, feetY: number, left: boolean) {
+  const X = (dx: number, w: number) => Math.round(x + (left ? -dx - w : dx));
+  const y = Math.round(feetY);
+  r(X(1, 4), y - 11, 4, 4, "#9a948c"); // pot lid cheek
+  r(X(2, 2), y - 10, 2, 1, "#c9c3ba");
+  r(X(-8, 3), y - 8, 3, 5, "#e05a45"); // toy arm
+  r(X(-8, 3), y - 4, 3, 2, "#4d7a9c");
+  r(X(4, 2), y - 9, 2, 2, "#6f9a5a"); // sprout
+  r(X(5, 3), y - 11, 3, 2, "#8fbf6a");
+}
+
+/** Bunting across the roof once the block has thrown its party. */
+function drawBunting(c: Brush, camX: number, camY: number, t: number, reduced: boolean) {
+  const x1 = Math.round(22.5 * T - camX),
+    x2 = Math.round(45.5 * T - camX),
+    y = Math.round(15.6 * T - camY);
+  c.strokeStyle = "#5b4a40";
+  c.lineWidth = 1;
+  c.beginPath();
+  c.moveTo(x1, y);
+  c.quadraticCurveTo((x1 + x2) / 2, y + 10, x2, y);
+  c.stroke();
+  for (let i = 1; i < 18; i++) {
+    const f = i / 18,
+      px = x1 + (x2 - x1) * f,
+      py = y + 20 * f * (1 - f) + (reduced ? 0 : Math.round(Math.sin(t / 25 + i) * 0.6));
+    poly(c, palette.cloth[i % palette.cloth.length], [px - 3, py, px + 3, py, px, py + 6]);
   }
 }

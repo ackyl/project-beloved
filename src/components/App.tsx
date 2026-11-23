@@ -18,6 +18,8 @@ import { GameCanvas } from "./GameCanvas";
 import { Icon } from "./Icon";
 import { DeathCard } from "./DeathCard";
 import { DeathBoard } from "./DeathBoard";
+import { erase, load, save, type Store } from "../game/save";
+import { PAPER } from "../game/twist";
 import { NEIGHBOURS } from "../game/data/neighbours";
 import { T, view } from "../rendering/drawWorld";
 import { centerX } from "../game/physics";
@@ -64,10 +66,20 @@ export function App() {
   return <Game />;
 }
 
-type Modal = "pause" | "board" | null;
+type Modal = "pause" | "board" | "paper" | "restart" | null;
+
+/** Local storage, or null where the browser blocks it. */
+function storage(): Store | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
 
 function Game() {
-  const [g] = useState<GameState>(() => createGame()),
+  const [g, setG] = useState<GameState>(() => load(storage()) ?? createGame()),
+    [dark, setDark] = useState<{ who: string; text: string }[] | null>(null),
     [modal, setModal] = useState<Modal>(null),
     [sound] = useState(() => new Sound()),
     [audio, setAudio] = useState(false),
@@ -82,6 +94,40 @@ function Game() {
     bubbleKey = useRef(0),
     bubbleLayer = useRef<HTMLDivElement>(null);
   const paused = modal !== null;
+
+  // Save on meaningful events (see handle), every few seconds, and on leaving.
+  useEffect(() => {
+    const persist = () => save(storage(), g);
+    const id = window.setInterval(persist, 5000);
+    const hide = () => {
+      if (document.hidden) persist();
+    };
+    document.addEventListener("visibilitychange", hide);
+    window.addEventListener("pagehide", persist);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", hide);
+      window.removeEventListener("pagehide", persist);
+    };
+  }, [g]);
+
+  // The street's ambient pigeons, when audio is on.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (!paused && document.hasFocus()) sound.coo();
+    }, 9000);
+    return () => window.clearInterval(id);
+  }, [sound, paused]);
+
+  const startOver = () => {
+    erase(storage());
+    window.clearTimeout(cardTimer.current);
+    setCard(null);
+    setBubbles([]);
+    setDark(null);
+    setG(createGame());
+    setModal(null);
+  };
 
   const open = (next: Modal) => {
     if (next && !modal)
@@ -166,7 +212,9 @@ function Game() {
   const handle = (e: GameEvent) => {
     switch (e.type) {
       case "death":
-        sound.death(e.isNew);
+        save(storage(), g);
+        if (e.cause === "laughing") sound.laugh();
+        else sound.death(e.isNew);
         setCard(e);
         window.clearTimeout(cardTimer.current);
         cardTimer.current = window.setTimeout(() => setCard(null), CARD_MS);
@@ -174,6 +222,14 @@ function Game() {
         return;
       case "respawn":
         sound.ding();
+        setDark(null);
+        save(storage(), g);
+        return;
+      case "twist":
+        save(storage(), g);
+        if (e.step === 2) setDark([]);
+        if (e.step === 3) open("paper");
+        setRevision((n) => n + 1);
         return;
       case "bonk":
         sound.bonk();
@@ -208,6 +264,10 @@ function Game() {
         return;
       case "speech": {
         sound.speak();
+        if (g.phase === "twist") {
+          setDark((lines) => [...(lines ?? []), { who: e.who, text: e.text }]);
+          return;
+        }
         const until = performance.now() + BUBBLE_MS + e.text.length * 25;
         setBubbles((list) => [
           ...list.filter((b) => b.who !== e.who),
@@ -255,6 +315,11 @@ function Game() {
           <span>
             Human <b>{g.board.laughing ? "provisionally" : "not yet"}</b>
           </span>
+          {g.twist === 1 ? (
+            <span className="warn">
+              Replicator <b>feedstock low</b>
+            </span>
+          ) : null}
         </p>
         <div className="top-actions">
           <button className="board-btn" onClick={() => open("board")}>
@@ -283,7 +348,7 @@ function Game() {
       </header>
       <section className="viewport" aria-label="The block" inert={paused}>
         <GameCanvas game={g} paused={paused} reduced={reduced} onFrame={onFrame} />
-        {hint ? (
+        {hint && !paused && !dark ? (
           <p className="prompt">
             <kbd>E</kbd> {hint}
           </p>
@@ -296,6 +361,15 @@ function Game() {
           ))}
         </div>
         {card ? <DeathCard death={card} /> : null}
+        {dark ? (
+          <div className="dark" role="status">
+            {dark.map((l, i) => (
+              <p key={i}>
+                <b>{l.who === "you" ? "You" : NEIGHBOURS[l.who as keyof typeof NEIGHBOURS].name}</b> {l.text}
+              </p>
+            ))}
+          </div>
+        ) : null}
         <ul className="legend" aria-label="Controls">
           <li>
             <kbd>A</kbd>
@@ -322,6 +396,36 @@ function Game() {
         <div className="scrim" ref={dialog}>
           {modal === "board" ? (
             <DeathBoard g={g} close={() => open(null)} />
+          ) : modal === "paper" ? (
+            <div className="dialog paper-reveal" role="dialog" aria-modal="true" aria-labelledby="paper-title">
+              <p className="eyebrow">Pinned to the Death Board by Rook</p>
+              <h2 id="paper-title" className="paper">
+                <span className="half">{PAPER.left}</span> <span className="half rook-half">{PAPER.right}</span>
+              </h2>
+              <p>
+                It's from Rook's school poster, <i>Things Only Humans Do</i>. Every one of your deaths had the
+                whole block dying laughing. And now, for the first time, so are you.
+              </p>
+              <button className="text-button" onClick={() => open(null)}>
+                Laugh
+              </button>
+            </div>
+          ) : modal === "restart" ? (
+            <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="restart-title">
+              <h2 id="restart-title">Start over?</h2>
+              <p>
+                This erases the Death Board, the attempt count and every old body. Bas will be thrilled. It can't be
+                undone.
+              </p>
+              <div className="row">
+                <button className="text-button" onClick={() => open("pause")}>
+                  Keep my bodies
+                </button>
+                <button className="text-button danger" onClick={startOver}>
+                  Erase and start over
+                </button>
+              </div>
+            </div>
           ) : (
             <div className="dialog" role="dialog" aria-modal="true" aria-labelledby="pause-title">
               <div className="dialog-head">
@@ -331,10 +435,17 @@ function Game() {
                 </button>
               </div>
               <p>The block holds its breath. The pigeons do not, but they are polite about it.</p>
-              <p className="micro">Motion: {reduced ? "reduced (system setting)" : "full"}</p>
-              <button className="text-button" onClick={() => open(null)}>
-                Resume
-              </button>
+              <p className="micro">
+                Motion: {reduced ? "reduced (system setting)" : "full"} · Progress saves in this browser.
+              </p>
+              <div className="row">
+                <button className="text-button" onClick={() => open(null)}>
+                  Resume
+                </button>
+                <button className="text-button quiet" onClick={() => setModal("restart")}>
+                  Start over…
+                </button>
+              </div>
             </div>
           )}
         </div>

@@ -87,3 +87,10 @@ export const KINDNESS_TICKS = 45;
 export const CRANE_IDLE_TICKS = 600;
 export const CRANE_SPEED = 0.09;
 export const SPEECH_TICKS = 210;
+
+// Chunk 4: the twist.
+/** Unique board deaths before the replicator runs low on feedstock. */
+export const TWIST_AT = 12;
+/** Length of the dark stretch while the neighbours rebuild you. */
+export const TWIST_DARK_TICKS = 60 * 7;
+export const PARTY_TICKS = 60 * 12;
