@@ -1,47 +1,73 @@
-# BELOW, BELOVED — GAME DESIGN
+# PROJECT BELOVED — GAME DESIGN
 
-**Status:** Prototype specification, v0.1. **Working title:** Below, Beloved.
+**Status:** v0.2 design, in development. It replaces the v0.1 mining slice *Below, Beloved*, which remains in git history at `ca6f8c1`.
+**Genre:** 2D side-view sandbox platformer. Absurdist comedy with a heartwarming core.
+**Platform:** Desktop only. Narrow or touch-only devices see a "desktop experience" screen.
 
-## Concept
+## Logline
 
-A gentle maintenance android excavates the remains of an abandoned underground civilization, seeking treatments for the unseen human in its care. The android experiences the luminous, unsettling underground ecosystem as beautiful; the player gradually recognizes the horror in those same discoveries.
+A cheerful maintenance android finds a torn scrap of paper that reads **"ONLY HUMANS DIE."** It wants to be human, so it does the logical thing: it dies. Its replicator pod disagrees, and every time it prints a fresh copy. The old body stays exactly where it fell, stiff as a board. The neighbours have opinions.
 
-**X, but Y:** *Dome Keeper*'s tactile directional mining meets *SIGNALIS*'s environmental unease, but the protagonist sees wonder rather than terror, and the objective is care rather than combat.
+## Pillars
 
-## Experience pillars
+1. **Dying is the verb, and it's funny.** Each new way to die is a small discovery. It earns a card on the Death Board and a line in the android's research log, for example: *"Attempt 37: still not human. Learned: pigeons are a community."*
+2. **Your past is physical.** Every body stays. You can grab it, throw it, stack it, or use it as a doorstop, a counterweight or a ladder. Some deaths are only reachable by standing on your previous selves.
+3. **A neighbourhood that notices.** Four residents react to your deaths, remember them and slowly change how they treat you. The twist is built from what they have been quietly doing.
+4. **Dumpster-cozy, never grim.** The setting is a sun-bleached slum with solar panels, laundry lines, rooftop gardens, rust and patched tarps. There is no neon and no gore. Deaths are sparks, loose bolts, a comic sound and a stiff pose.
+5. **Endless by design.** There is no fail state. Completing the Death Board is the long goal. The twist lands partway through, and play continues afterwards.
 
-1. **Digging is intrinsically pleasant.** Four-direction floating movement and contact-based mining feel responsive, even between discoveries.
-2. **Curiosity drives progress.** Strange geology and specimens reward exploration and experimentation, not combat.
-3. **Comfort against dread.** The compact warm android base contrasts with huge, silent caverns. Dread comes from environmental implications, never jumpscares.
-4. **Care without punishment.** The human needs periodic treatment, but neglect never causes death, a game over, or a hard time limit.
-5. **Small interactions, meaningful revelations.** A specimen can matter as an object to gather, a property to deduce, a treatment component, and a story clue.
+## Tone guardrail
 
-## Core loop
+Deaths are slapstick, environmental and specific to this city: trams, compactors, pigeons, fryers, solar mirrors. They never imitate real-world self-harm methods, such as ropes, pills or blades. The joke is always the android's sincere, wrong-headed science. The neighbours' warmth carries the emotional weight.
 
-Leave base → Float and mine into the cave → Find and collect specimens → Return to base → Run tests / infer treatment → Care for unseen human → Observe a change → Explore farther.
+## The slice: one block
 
-## Prototype boundaries
+A small playable area, about 4–5 screens wide and 3 screens tall. The level is a hand-authored tilemap, not procedural, so that the death setups can be designed.
 
-**First deliverable: one playable vertical slice** containing:
-- One contiguous, seeded, destructible 2D cave with an accessible starting area.
-- One small, warm android base with a curtain separating the player from the unseen patient. Never reveal a bed or patient sprite.
-- 4-direction float movement, directional collision-mining, and terrain with varying hit requirements.
-- A basic inventory, two collectible material types and one meaningful biological specimen.
-- A compact, understandable property-testing and recipe-deduction interaction.
-- Periodic, non-lethal care need; one treatment and a visible/audible response from beyond the curtain.
-- One handcrafted narrative location integrated into procedural terrain, leading to one environmental revelation.
-- Clear onboarding and a repeatable loop; no need for complete story or full progression.
+| Area | Contents |
+| --- | --- |
+| **The Building**, a 3-floor walk-up | **Ground:** the android's flat, with the **Replicator pod** where you respawn and the **Death Board**, a corkboard of polaroids. **Floor 2:** neighbours' flats and a shared stairwell with a ladder. **Roof:** solar panels, Juniper's planters, a water tank, an antenna and pigeons. |
+| **The Street** | Auntie Pell's noodle cart, a tipsy vending machine, a market power strip, a tram line with a stop, laundry lines strung between buildings, and a canal grate. |
+| **The Scrapyard** | Bas's yard, with a magnet crane, a trash compactor and the solar mirror array. |
 
-**Explicitly excluded:** combat, enemies, jumping, gravity, hunger, health-based failure, extensive crafting, farms, freeform base building, extensive dialogue trees, backend, login, economy, multiple biomes, complex ecosystem simulation.
+## Neighbours
 
-## Story treatment
+| Name | Who | Role in play | Role in the twist |
+| --- | --- | --- | --- |
+| **Auntie Pell** | Runs the noodle cart. Feeds you anyway ("you look thin"). | Sets up kitchen deaths. Keeps a tally on her chalkboard. | Donates her pots. |
+| **Rook** | A kid with a notebook who rates every death out of five stars. | Gives cryptic hints for locked Death Board slots. Says "boring" when you repeat a death. | Pins up the other half of the torn paper. |
+| **Bas** | The grumpy scrapyard keeper. | Runs the crane and the compactor. Carts away your oldest bodies "for scrap". | Has been feeding your bodies, and later his own things, into the replicator. |
+| **Juniper** | A rooftop gardener and the solarpunk heart of the block. | Runs the irrigation and the planters. Unbothered by anything. | Grows something from your spare parts. |
 
-The android is curious, competent, gently affectionate, and not stupid. It describes objectively disturbing details in clinical or delighted language without making the game a comedy. The patient is an unseen presence behind a curtain; communicate through monitor changes, subtle audio, and occasional short response. In this prototype, do **not** explain why civilization fell, who the patient is, or what the ecosystem ultimately means.
+Their lines are short and state-driven. They change with the attempt count, specific deaths and twist progress. There are no dialogue trees.
 
-### One authored revelation (proposed for the slice)
+## The twist (draft, pending review)
 
-A luminous root/fungal specimen seems helpful for the patient's respiratory symptoms. Deep in an abandoned treatment annex, the player finds the same growth intertwined with old patient support hardware. The android describes the organism's unusual efficiency and beauty. Back at base, the human responds to the treated sample's distinct rhythmic sound. Present a disturbing connection but no definitive answer. This is a prototype narrative beat, not a locked final-world explanation.
+**Setup, which runs throughout the game:**
+- Bas keeps carting old bodies away.
+- Rook keeps rating your deaths, and his ratings get kinder.
+- Pell's pots start disappearing.
+- Juniper's planter grows a sprout with a tiny bolt for a leaf.
+
+**Trigger:** after about 12 unique deaths, the replicator starts to sputter: *"FEEDSTOCK LOW."* Bas grumbles that he's "out of you." The android is thrilled. Surely the next death will finally stick.
+
+**The beat:**
+1. The next death plays out with no ding. The screen goes black, and you hear only the neighbours' muffled voices, arguing and clanking.
+2. The android wakes up rebuilt, mismatched: a pot-lid cheek from Pell, a toy arm from Rook and a sprouting shoulder from Juniper. These changes are permanent and cosmetic. Bas had been feeding your old bodies into the replicator all along, and when they ran out, the neighbours gave their own things.
+3. Pinned to the Death Board is the **other half of the torn paper**, put there by Rook. It's a page from his school poster, *Things Only Humans Do*. The full line reads: **"ONLY HUMANS DIE LAUGHING."**
+4. The android realises that every one of its deaths had the whole block dying laughing. For the first time, it laughs too.
+5. A final card appears: **#21 Died Laughing.** *"Not technically a death. Human: provisionally confirmed."* The block throws a small rooftop party.
+
+**After the twist:** play continues. The replicator runs on community scrap now. The remaining deaths are still there to find, and the neighbours' lines shift to fond, teasing ones.
+
+## Out of scope for this slice
+
+Combat, enemies, health bars, timers or any fail state, procedural levels, dialogue trees, crafting trees, multiple districts, mobile or touch controls, online features and accounts.
 
 ## Success criteria
 
-The slice is successful if: (1) mining is enjoyable without story triggers, (2) the player understands differences in terrain hardness, (3) they can deliberately find and collect a specimen, (4) they can infer a treatment from test results instead of guessing blindly, (5) they can administer it and observe a non-lethal condition change, and (6) the single revelation makes the player reconsider a prior beautiful discovery.
+1. Walking, jumping and throwing feel good with nothing dying.
+2. A new player discovers their first death within about 30 seconds, and their first corpse-based death without being told.
+3. Players laugh at death cards and go back to check hints on the Death Board.
+4. At least one playtester feels genuinely warm at the twist, not just amused.
+5. After the twist, players keep hunting for the remaining deaths.

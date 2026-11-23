@@ -1,35 +1,47 @@
-# BELOW, BELOVED — VISUAL AND FEEL
+# PROJECT BELOVED — VISUAL AND FEEL
 
 ## Intent
 
-A quiet, beautiful underground world that increasingly troubles the *player*, while the android responds with curiosity. The game's visual hierarchy prioritizes a living, navigable mining environment over application UI.
+A sunny, scrappy, lived-in neighbourhood where an earnest android keeps dying in ridiculous ways. Think dumpster-cozy and solarpunk-adjacent: patched, sun-bleached and full of plants. It is cyberpunk density without the neon, the rain or the gloom.
+
+## Palette
+
+| Role | Colours |
+| --- | --- |
+| Sky | Faded teal `#9cc3bd` fading to warm cream `#f1dcb3` |
+| Buildings | Terracotta `#d39b72`, dusty clay `#b98a6b`, distant blue-grey `#86a7a1` |
+| Life | Plant greens `#6f9a5a` and `#4f7444`, terracotta pots `#b8644a` |
+| Tech | Solar-panel blue `#4d7a9c`, oxidised dumpster green `#5c7d69`, rust |
+| Light | Warm window amber `#f4c77f` and sun cream `#fff1cf` |
+| Accents | Laundry pastels: blush, butter, sky, linen, sage |
+
+No neon, no saturated magenta or cyan, and no dark rainy scenes.
 
 ## Scene composition
 
-- **Cave:** side-view pixel-art presentation, chunky and visually varied tiles, dark silhouettes, luminous crystal veins and bioluminescent organic formations. Low-resolution internal rendering may be scaled with nearest-neighbor interpolation.
-- **Android:** distinct small silhouette and directional movement/impact cues; bright enough to track in darkness. No large animation sheet is required initially; small sprite shapes are fine.
-- **Sanctuary:** tiny warm mechanical base at the top/entry. Android tools, specimen console, storage and a **closed curtain** separating the human's location. **No visible bed or human body.** The curtain is always closed in the slice. A dim monitor and breathing sound indicate presence.
-- **Contrast:** amber/cream cozy base versus blue-green/violet cave glow; horror appears through unsettling composition, repetition and evidence, not gore or scare flashes.
+- **Side-view pixel art:** a low-resolution internal canvas scaled up with nearest-neighbour filtering. There are three depth layers: a far skyline, mid-ground buildings, and the playable layer.
+- **Density:** the block should feel stacked and patched together, with water tanks, antennas, tarps, laundry lines, potted tomatoes on dumpsters and hand-painted signs.
+- **Android:** a small, round-edged and readable sprite. Its stiff corpse poses (upright, flat, upside-down) must read as funny, not gruesome. Use sparks and loose bolts, never gore.
+- **Neighbours:** distinct silhouettes and colour accents so each can be recognised at a glance.
 
-## Feel details
+## Feel
 
-- Contact mining: immediate hit pulse and crunchy sound, impact particles, brief hit/damage stage, clear break. Different material hardness is felt without long waiting.
-- Moving: quick, responsive float, consistent directional control; camera smooth but not laggy.
-- Specimens: distinct silhouette and light behavior; subtle periodic response to player interaction.
-- Narrative discovery: environmental evidence first, one short android observation afterwards. Do not block movement for lengthy exposition.
-- Human care: curtain, monitor change, small audio cue; a short, quiet emotional moment rather than a big cutscene.
+- **Movement:** snappy acceleration, short coyote time, a satisfying jump arc and a little squash on landing.
+- **Death:** a hit-stop of a few frames, a freeze into a stiff pose, a burst of sparks and bolts, and a comic sound. The death card slides in quickly. Pacing matters more than spectacle: the full cycle takes at most 3 s.
+- **Respawn:** the replicator glows and dings, and the new copy steps out with a small hop.
+- **Throws and stacking:** corpses land with a woody clack and settle without jitter.
 
 ## UI direction
 
-- React shell uses compact dark panels, neutral body text, restrained accent colors, good touch targets. Avoid ornamental dashboards, generic startup landing pages, overly polished SaaS visuals, and huge menus.
-- The game world must occupy most available space. On mobile, use collapsible/compact HUD and a translucent thumb-accessible movement pad. On desktop, show controls only as needed.
-- Styling baseline can start with `#0a0a0a` page, `#141414` surface, `#303030` border, `#f2f2f2` text, but the world should be richer and warmer than the shell.
-- Explicitly label uncertain or prototype visuals as placeholder assets; no third-party art required.
+- The shell is warm charcoal with cream "paper" text, terracotta and faded-teal accents, and a Space Mono font for counters.
+- The **Death Board** is a corkboard of polaroid cards with handwritten-style captions, plus Rook's star ratings in pencil.
+- Death cards slide up from the bottom and must not cover the playable area for long.
+- Keep the HUD to the top bar: the attempt count, the "Human: not yet" status and the audio and pause buttons.
 
 ## Audio
 
-- Optional lightweight Web Audio cues for dig hits, break, specimen resonance and patient monitor. User gesture gates audio; mute button; reduced-motion preference respected. Do not block the first slice on music/audio availability.
+Lightweight Web Audio cues: footsteps, jump, grab and throw, a comic stinger for each death category, the replicator ding, and ambient street sounds such as pigeons and a distant tram. Audio starts muted.
 
-## Minimum visual quality bar
+## Placeholder policy
 
-It must immediately read as a side-view **mining game**: a visible android moving into rock, excavated paths staying open, different tile materials, collectible glows, a persistent home location, and a recognizable sealed annex. A static picture plus buttons does not meet the bar.
+Chunk 0 ships a code-drawn placeholder street. Code-drawn pixel sprites are fine through Chunk 3. Label placeholder art in the UI and docs until it's replaced.

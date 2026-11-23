@@ -1,39 +1,42 @@
-# Below, Beloved
+# Project Beloved
 
-A browser-playable side-view mining game. Float out of a warm sanctuary, dig through the Quiet Hollow, and bring something back for the human behind the curtain.
+A desktop 2D sandbox platformer about a cheerful android that read **"ONLY HUMANS DIE"** on a torn scrap of paper and is now very scientifically trying to become human. Its replicator keeps printing new copies. The old bodies stay where they fell. The neighbours have opinions.
+
+> **Status:** early development. Chunks 0 and 1 are done: you can walk, jump, climb and throw things around the block. Nothing can die yet. See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) and [the development status](docs/DEVELOPMENT_STATUS.md).
 
 ## Run locally
 
-Use Node 22.12+ on the 22.x line, Node 24.x, or Node 26+. The verification machine used Node 24.14.1.
+Use Node 22.12+ on the 22.x line, Node 24.x, or Node 26+.
 
 ```sh
 npm ci
 npm run dev
 ```
 
+The game is desktop only. Narrow windows and touch-only devices show a "desktop experience" screen. Add `?desktop=1` to the URL to bypass it while testing.
+
 ## Controls
 
-| Action | Keyboard | Touch |
+| Action | Keyboard | Available |
 | --- | --- | --- |
-| Float and excavate | Hold WASD or an arrow key | Hold a direction on the pad |
-| Collect | Move into an exposed drop | Same |
-| Open the sanctuary console | E near home | Tap Console |
-| Unseal the medical annex | Hold E at the entrance | Hold Unseal |
-| Read discoveries | J | Tap the field log |
-| Pause, change motion settings, or restart | Esc | Tap pause |
+| Pause | Esc | Now |
+| Walk | A/D or left/right arrows | Now |
+| Climb ladders, drop through platforms | W/S or up/down arrows | Now |
+| Jump | Space or K | Now |
+| Grab, throw | Shift or J. Hold W to throw high, S to set down. | Now |
+| Interact | E | Chunk 2 |
+| Death Board | Tab | Chunk 2 |
 
-The last direction pressed takes priority. Release it to resume an earlier held direction. Float into a wall to strike it repeatedly. Earth takes one hit, stone and copper take two, and prism takes three. The depth, local scan, objective bearing and distance help with orientation. Audio starts muted.
+Audio starts muted.
 
-The bloom has its own inventory pocket. Minerals that do not fit stay where they fell. The sanctuary has a mineral locker and a two-slot pack extension. Two tests at the console provide the clues for a treatment. A wrong inference preserves the sample. Once a dose is prepared, select Care at the closed curtain.
+## Docs
 
-The simulation and care clock stop during menus and when the game loses focus. Care needs recur, and the living culture can supply subsequent doses. Progress lasts for the current page session. Restart accepts an unsigned 32-bit seed, including zero. The default is 1703.
+- [Game design](docs/GAME_DESIGN.md): concept, pillars, tone guardrail, the block, the neighbours and the twist.
+- [Mechanics](docs/MECHANICS.md): movement, death and replication, corpses and the Death Board list.
+- [Visual direction](docs/VISUAL_DIRECTION.md): palette and feel.
+- [Architecture](docs/ARCHITECTURE.md): code layout, state and commands, physics.
 
-## Implementation
-
-- `src/game/` owns a deterministic finite 72 × 43 tile world, material durability, contact mining, pickups, inventory, the sealed panel, research and care. A fixed 60 Hz simulation consumes typed commands. Timing and capacity values live in `balance.ts`.
-- `src/rendering/` draws the side-view scene, camera, destructible terrain, sprites, lighting and feedback with Canvas 2D. It caches terrain and repaints affected neighborhoods when a tile changes. The panorama, shale texture and sanctuary art ship locally in `public/art/`.
-- `src/components/` provides keyboard and touch input, HUD, local scan, field log, settings and sanctuary interactions. DOM updates follow changes visible to the HUD. The simulation has no React or browser dependencies. The optional Web Audio adapter synthesizes short cues.
-- Barlow and Space Mono are bundled locally with their licenses in `public/fonts/`.
+The previous game in this repository, *Below, Beloved*, is preserved in git history at commit `ca6f8c1`.
 
 ## Verify and deploy
 
@@ -44,4 +47,4 @@ npm run build
 npm run preview
 ```
 
-For Vercel, select the Vite preset, use `npm run build`, and publish `dist/`. The root route and all game assets are static. See [the verification log](docs/DEVELOPMENT_STATUS.md) for tested environments and limitations.
+For Vercel, select the Vite preset, use `npm run build`, and publish `dist/`.

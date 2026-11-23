@@ -49,17 +49,8 @@ export class Sound {
       v.disconnect();
     };
   }
-  impact(broken: boolean, hard: boolean) {
-    this.tone(hard ? 210 : 145, broken ? 0.15 : 0.09, 0.052, 0, "triangle", 43);
-    this.tone(670, 0.038, 0.011, 0, "square", 190);
-  }
-  pulse() {
-    [0, 0.21, 0.42].forEach((delay, i) =>
-      this.tone(370 + (i % 2) * 70, 0.2, 0.032, delay),
-    );
-  }
-  item() {
-    this.tone(630, 0.12, 0.025);
-    this.tone(840, 0.16, 0.02, 0.08);
+  /** Soft UI confirmation. Chunk 4 adds death stingers and the replicator ding. */
+  blip() {
+    this.tone(520, 0.08, 0.02);
   }
 }

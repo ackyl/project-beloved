@@ -3,40 +3,33 @@ import { command, tick, type Game } from "../game/simulation";
 import { STEP } from "../game/balance";
 import { scene } from "../rendering/drawWorld";
 
+/** Fixed-step loop: requestAnimationFrame is the clock, the simulation runs at 60 Hz. */
 export function GameCanvas({
   game,
   paused,
-  onFrame,
   reduced,
 }: {
   game: Game;
   paused: boolean;
-  onFrame: () => void;
   reduced: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null),
-    latest = useRef({ paused, onFrame, reduced });
-  latest.current = { paused, onFrame, reduced };
+    latest = useRef({ paused, reduced });
+  latest.current = { paused, reduced };
   useEffect(() => {
     const canvas = ref.current!,
       ctx = canvas.getContext("2d")!,
-      draw = scene(game);
+      draw = scene();
     let id = 0,
       last = 0,
       acc = 0,
       active = document.hasFocus();
     const resize = () => {
-      const scale = Math.max(1.5, Math.min(3.6, canvas.clientHeight / 340));
+      const scale = Math.max(1.5, Math.min(3.6, canvas.clientHeight / 300));
       const dpr = window.devicePixelRatio || 1,
         pixel = Math.max(1, Math.round(dpr * scale));
-      canvas.width = Math.max(
-        1,
-        Math.round((canvas.clientWidth * dpr) / pixel),
-      );
-      canvas.height = Math.max(
-        1,
-        Math.round((canvas.clientHeight * dpr) / pixel),
-      );
+      canvas.width = Math.max(1, Math.round((canvas.clientWidth * dpr) / pixel));
+      canvas.height = Math.max(1, Math.round((canvas.clientHeight * dpr) / pixel));
       ctx.imageSmoothingEnabled = false;
     };
     const observer = new ResizeObserver(resize);
@@ -51,11 +44,6 @@ export function GameCanvas({
     document.addEventListener("visibilitychange", reset);
     window.addEventListener("blur", reset);
     window.addEventListener("focus", reset);
-    const setPos = (key: string, value: number) =>
-      canvas.parentElement!.style.setProperty(
-        key,
-        (value * 100).toFixed(2) + "%",
-      );
     const frame = (now: number) => {
       if (active && !document.hidden && !latest.current.paused) {
         acc += last ? Math.min((now - last) / 1000, 0.09) : 0;
@@ -65,12 +53,7 @@ export function GameCanvas({
         }
       } else acc = 0;
       last = now;
-      const p = draw(ctx, latest.current.reduced);
-      setPos("--player-x", p.px);
-      setPos("--player-y", p.py);
-      setPos("--home-x", p.homeX);
-      setPos("--home-y", p.homeY);
-      latest.current.onFrame();
+      draw(ctx, game, latest.current.reduced);
       id = requestAnimationFrame(frame);
     };
     id = requestAnimationFrame(frame);
@@ -85,7 +68,7 @@ export function GameCanvas({
   return (
     <canvas
       ref={ref}
-      aria-label="Side-view cavern. Float with WASD or arrow keys, and hold into rock to excavate."
+      aria-label="Side view of the block: the walk-up, the street and the scrapyard. Walk with A and D, jump with Space, climb with W and S, grab and throw with Shift or J."
     />
   );
 }

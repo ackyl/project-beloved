@@ -68,44 +68,6 @@ export const iconColors: Record<string, string> = {
   w: "#efe4c7",
   y: "#e3ad67",
 };
-export const itemArt = {
-  copper: [
-    "............",
-    "......oo....",
-    ".....ottoo..",
-    "...soottoo..",
-    "..ootossoo..",
-    "..ottoooss..",
-    ".sotoootoss.",
-    ".soooootoss.",
-    "..ssossoss..",
-    "...sssss....",
-  ],
-  crystal: [
-    ".......cc...",
-    "......clc...",
-    "...c..clc...",
-    "..clc.clc...",
-    "..clccccc.c.",
-    "..cccccc.cl.",
-    "...cbccccc..",
-    "...bbccbc...",
-    "....bbbbb...",
-    "............",
-  ],
-  bloom: [
-    "......hh....",
-    "...phhph....",
-    "..hhphvp.hh.",
-    "..vppvvphp..",
-    "....pvpvv...",
-    ".aa..vg..aa.",
-    "..gaaagaga..",
-    "...ggaggg...",
-    ".....gg.....",
-    "....gbgg....",
-  ],
-};
 export const androidArt = [
   ".....kk.......kk....",
   ".....kyk.....kyk....",
@@ -125,28 +87,39 @@ export const androidArt = [
   "....kyskskksskkk...",
   "....kwwk..kwwk.....",
   "....kssk..kssk.....",
-  ".....aa....aa......",
 ];
+export type Pose = "idle" | "walk" | "air" | "climb";
+
+/** Draws the android with its feet centred on (x, feetY). The sprite is 20 × 18 px. */
 export function android(
   c: Brush,
   x: number,
-  y: number,
+  feetY: number,
   left: boolean,
   t: number,
+  pose: Pose,
   reduced: boolean,
 ) {
   c.save();
-  c.translate(
-    Math.round(x),
-    Math.round(y + (reduced ? 0 : Math.sin(t / 17) * 0.8)),
-  );
+  c.translate(Math.round(x), Math.round(feetY));
   c.scale(left ? -1 : 1, 1);
   const r = brush(c),
-    n = reduced ? 2 : 2 + Math.round(2 * Math.sin(t / 4));
-  r(-5, 8, 2, 3 + n, "#448f91");
-  r(3, 8, 2, 2 + n, "#4b9b9e");
-  r(-5, 8, 2, 2, "#d4faca");
-  r(3, 8, 2, 2, "#d4faca");
-  sprite(r, -10, -11, androidArt, iconColors);
+    frame = reduced && pose !== "walk" ? 0 : Math.floor(t / 6) % 4;
+  let liftL = 0,
+    liftR = 0,
+    bob = 0;
+  if (pose === "walk") {
+    liftL = frame === 1 ? 1 : 0;
+    liftR = frame === 3 ? 1 : 0;
+    bob = frame % 2;
+  } else if (pose === "air") liftL = liftR = 1;
+  else if (pose === "climb") {
+    liftL = frame < 2 ? 2 : 0;
+    liftR = frame < 2 ? 0 : 2;
+  } else if (!reduced) bob = Math.floor(t / 40) % 2;
+  sprite(r, -10, -18 - bob, androidArt.slice(0, 16), iconColors);
+  const legs = androidArt.slice(16);
+  sprite(r, -10, -2 - liftL, legs.map((row) => row.slice(0, 9)), iconColors);
+  sprite(r, -1, -2 - liftR, legs.map((row) => row.slice(9)), iconColors);
   c.restore();
 }

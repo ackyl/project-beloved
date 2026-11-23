@@ -1,45 +1,40 @@
-# Below, Beloved — development status
+# Project Beloved — development status
 
-**Playable vertical slice complete.** Verified on November 23, 2026. The production build starts in the sanctuary and remains playable after the care revelation.
+**Chunk 1 (platformer core) is complete.** Verified on November 23, 2026.
 
-![Production preview of the sanctuary and the Quiet Hollow](preview.png)
+The previous game, *Below, Beloved* (a mining and care vertical slice), was completed and verified at commit `ca6f8c1`. Its code, tests, art and verification log remain in git history.
 
 ## Milestones
 
-| Chunk | Delivered | Milestone gate |
+| Chunk | Delivered | Gate |
 | --- | --- | --- |
-| 1. Movement and excavation | Four-direction float, held-contact strikes, collision, durability, camera, keyboard and directional pad | Typecheck, 4 tests and build passed. A real-time Chrome keyboard smoke check changed the canvas during sustained excavation. |
-| 2. Cave and exploration | Seeded finite world, two minerals, persistent drops, reserved specimen slot, sanctuary and sealed medical annex | Typecheck, 8 tests and build passed. Reachability checked across 80 seeds. |
-| 3. Research and care | Two observations, three hypotheses, safe retries, breathing treatment, recurring care, linked revelation and optional pack extension | Typecheck, 14 tests and build passed. Three complete simulation journeys used movement and interactions from spawn. |
-| 4. Feel and release | Local pixel art, impact debris and durability feedback, warm sanctuary, audio, focus management, pause, local scan and portrait controls | Clean install, typecheck, 19 tests, static build and production-preview browser journeys passed. |
+| 0. Pivot and cleanup | Rename, rewritten docs, mining code removed, placeholder street, pause, audio toggle, desktop-only gate | Typecheck, 9 tests and build passed. Checked in the browser. |
+| 1. Platformer core | Tile collision, walking, variable jump with coyote time and buffering, ladders, one-way platforms, drop-through, following camera, and grabbing, carrying, throwing and setting down props. The block is roughed in. | Typecheck, 40 tests and build passed. Played with keyboard events in the browser. |
 
-## Release verification
+## Chunk 1 details
 
-| Check | Actual result |
+- **The block** (112 × 33 tiles) is roughed in: the walk-up (ground-floor flat with the replicator and Death Board, floor 2, and a roof with a water tank and climbable antenna), a fire escape, the west street with the tram shelter, the east street with the dumpster, noodle cart, vending machine and shack, and the scrapyard with a fence, scrap piles, the compactor pit and the crane gantry. Decor is placeholder art drawn in code. No hazards are active yet.
+- **The building is a cutaway**, so you see into the rooms from the side.
+- **Props:** crates, pots and tires. They are solid from above only, so they stack and you can stand on them. See `MECHANICS.md` for the rule and the tunables.
+- **Controls legend** at the bottom left of the screen.
+
+## Verification
+
+| Check | Result |
 | --- | --- |
-| Environment | Node 24.14.1, npm 11.11.0, Vite 7.3.8 and Vitest 5.1.1. Exact packages are in the lockfile. |
-| npm ci | Passed. npm reported zero known vulnerabilities during installation. |
-| npm run dev | Served the game locally. |
-| npm run typecheck | Passed under strict TypeScript. |
-| npm run test | All 19 tests in four files passed. |
-| npm run build | Produced static HTML, bundled JS and CSS, fonts and art in dist/. JS measured 83.92 kB gzip and CSS 3.81 kB gzip. |
-| npm run preview | Served the production build on port 4173. The short-portrait asset check recorded successful same-origin requests and no page errors. |
-| Chrome 157, desktop 1365 × 820 | Completed the full loop with keyboard movement and held E. Checked both minerals, specimen pickup, panel opening, return, wrong hypothesis feedback, correct treatment, care response and restart on seed 42. |
-| Chrome 157, emulated touch 390 × 844 | Completed the same loop using touch events on the direction pad, hold action and console buttons. Inspected a 2× pixel-density portrait rendering. |
-| Chrome 157, short portrait 320 × 568 | Inspected the layout and checked horizontal overflow, touch cancellation during mining, pause/resume, the blur handler, field log, invalid seed rejection, reduced-motion preference and mute/unmute. |
-| Playwright WebKit 27.2, desktop 1365 × 820 | Completed the keyboard journey through the built preview, including sample recovery, an incorrect inference, the revelation and seed restart. |
+| `npm run typecheck` | Passed under strict TypeScript. |
+| `npm run test` | 40 tests in 4 files passed. They cover the desktop gate; walking, the most-recent-direction rule, walls and clearing input; jump height, short hops, coyote time and jump buffering; one-way platforms and drop-through; climbing ladders and jumping off them; no tunnelling at maximum speed; determinism; grabbing, nearest-prop choice, forward, high and set-down throws; placement against walls and under low ceilings; stacking, standing on crates and collapsing stacks; a scripted journey from the flat to the top of the antenna; and seeded random-input runs (7 seeds, up to 6,000 ticks) that assert nothing ever ends up inside a tile. |
+| `npm run build` | Produced a static build. JS measured 79.02 kB gzip and CSS 1.26 kB gzip. |
+| Built-in browser, 1365 × 820, dev server | Keyboard events walked the android to the crate, grabbed it, threw it while jumping, then walked to the ladder and climbed to floor 2. The camera followed. A fresh page load produced no errors. |
 
-The browser journeys sent normal input to the game. They used controlled browser time for reproducible hold durations and checked visible inventory, prompts, objectives and care responses. No game-state injection was used. The full-loop simulation cases cover seeds 0, 1703 and 4294967295. The generation sweep covers seeds 0 through 79.
+## Known limits
 
-## Implemented tuning and scope
+- Movement feel has not been playtested by a human. All tunables are first guesses.
+- Props pass through the player sideways by design. This may need a visual cue later.
+- The bottom-left controls legend overlaps the street at small window heights.
+- Placeholder art throughout. Some mid-ground skyline colours sit close to the building's brick.
+- No physical phone or tablet testing for the desktop gate. Sound output was not checked.
 
-- The finite region is 72 × 43 tiles. An authored entry shelf and sample pocket lead toward a seeded annex location. Mineable terrain connects both ends, and opened tunnels persist.
-- The simulation advances at 60 Hz. Float speed is 3.65 tiles per second. Strikes repeat every 200 ms and the annex needs a 700 ms uninterrupted hold.
-- Eight pack slots include one reserved specimen pocket. Two copper buy two additional mineral slots. Inventory tests cover a full pack, persistent drops and purchases using both stored and carried copper.
-- Care reaches “Needs care” after 115 active seconds and stays there until treated. Tests exercised prolonged neglect, repeated care and the alternate order in which the player treats before finding the annex. The living culture remains available after treatment.
-- Progress is session-only. Restart accepts an unsigned 32-bit seed. All assets ship with the static build.
-- The cavern panorama, sanctuary and shale texture are generated raster art. The android, material deposits, flora, annex equipment, local scan and effects are drawn in code. The privacy curtain stays closed.
+## Next
 
-## Verification limits
-
-Physical phone ergonomics, iOS Safari, Android Chrome on hardware, Firefox and subjective audio playback remain untested. WebKit verification used the Playwright desktop engine. Browser audio checks covered unlocking and mute state. No live Vercel deployment or long-session hardware performance benchmark was performed.
+Chunk 2: death, corpses and the Death Board. See `IMPLEMENTATION_PLAN.md`.

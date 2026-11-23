@@ -1,36 +1,38 @@
-# BELOW, BELOVED — IMPLEMENTATION PLAN
+# PROJECT BELOVED — IMPLEMENTATION PLAN
 
-**Goal:** a complete playable vertical slice. Execute in meaningful chunks with typecheck, tests and production build after each stable milestone. Do not progress while critical defects remain.
+**Goal:** a playable desktop slice of one block, with 20 authored deaths, persistent physical corpses, four neighbours and the twist.
+Each chunk ends with `npm run typecheck`, `npm run test` and `npm run build` passing. Do not advance while critical defects remain.
 
-## Chunk 1 — Running game and tactile excavation
+## Chunk 0: Pivot and cleanup ✅
 
-Initialize Vite/React/strict TypeScript/Vitest and repository docs. Implement a real Canvas game viewport, player movement in four directions, collision mining driven by held direction, material hardness 1/2/3 hits, tile rendering, camera, mobile directional pad and desktop input, concise HUD and responsive layout. Add deterministic simulation and unit tests.
+Rename the project to Project Beloved. Rewrite the design docs. Remove the mining code, tests and art. Ship a running shell with a placeholder street, the pause menu, the audio toggle and the desktop-only gate.
 
-**Acceptance:** Start game → float into stone → visible repeat hits → tile breaks → move through opening. No click-to-mine requirement, gravity or jumping. Works with keyboard and touch. `typecheck`, `test`, `build` pass.
+## Chunk 1: Platformer core ✅
 
-## Chunk 2 — Cave, discoveries and reliable return
+Tilemap and collision, walking and jumping (with coyote time and a jump buffer), ladders, one-way platforms, a camera that follows the player, and grabbing, carrying, dropping and throwing props. Build it in a test room first, then rough in the block's layout.
+**Tests:** jump arc and coyote window; no tunnelling through tiles at maximum speed; throw trajectories are deterministic; a dropped prop never ends up inside a tile; the most recently pressed direction wins.
+**Acceptance:** moving around is fun in an empty room with keyboard only.
 
-Create deterministic finite-but-large procedural cave, material distribution, collectibles/inventory, starting sanctuary, safe return path and handcrafted annex template. Add a context-sensitive hold-to-open panel interaction and concise environmental clues. Add tests for reproducible generation, guaranteed critical discoveries, collision, mining and item persistence.
+## Chunk 2: Death, corpses and the Death Board
 
-**Acceptance:** Player can mine outward, find both resources and the luminous specimen, locate and open annex via hold interaction, and get back to base. No critical item softlock. Same seed reproduces world layout.
+Hazard events, the freeze-and-sparks transition, corpse entities (stacking, grabbing, standing on them, and the cap with Bas's cart), the replicator respawn, the death card, the Death Board overlay and the first 8 deaths.
+**Tests:** each death predicate fires exactly for its setup; repeats don't re-award; a 5-corpse stack is stable and climbable; the death-to-respawn cycle takes at most 3 s.
 
-## Chunk 3 — Research, human care and narrative revelation
+## Chunk 3: The block and the neighbours
 
-Implement small base overlay for tests, hypothesis selection, creation/administering of one treatment, gentle periodic patient needs and non-lethal state updates. Human stays behind a closed curtain and bed is never rendered. Add an authored observation in the annex and a linked response from behind the curtain after treatment. Add tests for deductions, incorrect attempts, treatment validation, care limits, complete loop and restart.
+The authored Building, Street and Scrapyard; four neighbours with state-keyed lines; Rook's ratings and hints; and the remaining 12 deaths, including the corpse-based and secret ones.
+**Tests:** every death is reachable from spawn, using simulated journeys driven by scripted input; neighbour lines resolve for every state.
 
-**Acceptance:** Player can complete: dig → specimen → annex clue → return → tests → infer → treat → hear/see unsettling response. No cutscene is needed. Typecheck/tests/build pass.
+## Chunk 4: Twist, save and feel
 
-## Chunk 4 — Feel, usability, release verification
-
-Improve mining feedback, particles, lighting, sound if feasible, mobile controls, layout across short portrait/regular portrait/desktop, accessibility, onboarding, restart and clear victory-of-slice feedback. Fix logic/UI discrepancies and update docs according to actual code.
-
-**Acceptance:** Run `npm run typecheck`, `npm run test`, `npm run build`, and `npm run preview`; exercise the playable loop in built preview on available browser environments. Report exactly what was or was not tested, with failures and limitations. Don't claim cross-device verification unless actually performed.
+The feedstock and twist sequence, the permanent mismatched parts, the Died Laughing card and the rooftop party; local save; audio (death stingers, the replicator ding, ambient street sounds); and a polish pass.
+**Tests:** the twist fires once at the threshold; a save round-trip matches the live state; a corrupt or old save falls back cleanly; storage that throws doesn't break play.
+**Verification:** a full playthrough to the twist at 1365 × 820 and 1920 × 1080, and a check of the desktop gate at 390 × 844. Update `DEVELOPMENT_STATUS.md` with measured results.
 
 ## Quality gates
 
-- End-user sees an interactive game, not a React dashboard masquerading as one.
-- Gameplay is deterministic and authoritative: invalid commands cannot mutate state.
-- No missing assets, obvious input latching, inaccessible controls or broken base transitions.
-- Each complete story beat has mechanical setup and consequence; don't front-load exposition.
-- Avoid feature creep: no combat, creature AI, hunger, full ecosystem simulation, elaborate upgrades or excessive UI components.
-- Commit `package-lock.json` and update `DEVELOPMENT_STATUS.md` with measured results.
+- The player sees a game scene, not a dashboard.
+- The simulation is authoritative and deterministic. Invalid commands cannot change state.
+- No missing assets, stuck input or broken overlay transitions.
+- Deaths stay slapstick and specific to the city (see the tone guardrail in `GAME_DESIGN.md`).
+- Avoid feature creep: no combat, no fail state, no procedural levels and no touch controls in this slice.
