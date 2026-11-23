@@ -6,6 +6,10 @@ import {
   COMPACTOR_RISE_SPEED,
   COMPACTOR_SLAM_SPEED,
   COMPACTOR_WARN_TICKS,
+  CRANE_IDLE_TICKS,
+  CRANE_SPEED,
+  VENDING_DOWN_TICKS,
+  VENDING_TIP_TICKS,
   CRANE_FALL,
   FALL_DEATH,
   GROUP_HUG_BONKS,
@@ -19,7 +23,7 @@ import {
   TRAM_SPEED,
 } from "./balance";
 import { kill } from "./death";
-import { centerX, overlaps, type Box } from "./physics";
+import { bottom, centerX, overlaps, type Box } from "./physics";
 import { findSpot, heldBody, tramBox } from "./props";
 import { corpseSize, emit, type Game } from "./state";
 import type { ZoneKind } from "./level/level";
@@ -192,3 +196,132 @@ export function checkHazards(g: Game, fall: number | null) {
   }
 }
 
+
+/** The vending machine tips over after enough shaking, towards whoever shook it. */
+export function vendingFallZone(g: Game): Box | null {
+  const m = g.level.machines.vending,
+    v = g.vending;
+  if (!m || !v) return null;
+  return v.dir > 0
+    ? { x: m.x + 0.3, y: m.y - 1.3, w: 2.2, h: 1.3 }
+    : { x: m.x - 2.5, y: m.y - 1.3, w: 2.2, h: 1.3 };
+}
+
+export function updateVending(g: Game) {
+  const v = g.vending;
+  if (!v) return;
+  v.timer++;
+  if (v.phase === "tipping" && v.timer >= VENDING_TIP_TICKS) {
+    v.phase = "down";
+    v.timer = 0;
+    emit(g, { type: "thud" });
+    const zone = vendingFallZone(g)!;
+    if (g.phase === "alive" && overlaps(zone, g.player)) kill(g, "vending");
+  } else if (v.phase === "down" && v.timer >= VENDING_DOWN_TICKS) {
+    v.phase = "up";
+    v.shakes = 0;
+    v.timer = 0;
+  }
+}
+
+/**
+ * The magnet crane: lowers at pickX, lifts anything metal (props, bodies and
+ * androids), carries it along the gantry and lets go over the scrap pile.
+ */
+export function updateCrane(g: Game) {
+  const m = g.level.machines.crane,
+    c = g.crane;
+  if (!m || !c) return;
+  const p = g.player;
+  c.timer++;
+  const lowest = m.groundY - 1.25;
+  switch (c.phase) {
+    case "idle":
+      if (c.timer >= CRANE_IDLE_TICKS) {
+        c.phase = "lowering";
+        c.timer = 0;
+      }
+      break;
+    case "lowering":
+      c.y = Math.min(lowest, c.y + CRANE_SPEED);
+      if (c.y >= lowest) {
+        // Grab: everything near the ground under the magnet.
+        for (const b of g.bodies)
+          if (
+            !b.held &&
+            !b.lifted &&
+            Math.abs(centerX(b) - c.x) <= 0.8 &&
+            bottom(b) >= m.groundY - 1.5 &&
+            c.cargo.length < 4
+          ) {
+            b.lifted = true;
+            c.cargo.push(b.id);
+          }
+        if (g.phase === "alive" && Math.abs(centerX(p) - c.x) <= 0.6 && bottom(p) >= m.groundY - 0.3 && !p.climbing) {
+          c.player = true;
+          p.lifted = "crane";
+          p.vx = 0;
+          p.vy = 0;
+        }
+        emit(g, { type: "thud" });
+        c.phase = "lifting";
+        c.timer = 0;
+      }
+      break;
+    case "lifting":
+      c.y = Math.max(m.liftY, c.y - CRANE_SPEED);
+      if (c.y <= m.liftY) c.phase = "moving";
+      break;
+    case "moving":
+      c.x = Math.max(m.dropX, c.x - CRANE_SPEED);
+      if (c.x <= m.dropX) {
+        // Let go of the android first, so it doesn't ride down on the cargo.
+        if (c.player) {
+          c.player = false;
+          p.peak = bottom(p);
+          p.grounded = false;
+        }
+        c.phase = "dropping";
+        c.timer = 0;
+      }
+      break;
+    case "dropping":
+      if (c.timer >= 30) {
+        for (const id of c.cargo) {
+          const b = g.bodies.find((b) => b.id === id);
+          if (b) {
+            b.lifted = false;
+            b.grounded = false;
+            b.vy = 0;
+          }
+        }
+        c.cargo = [];
+        c.phase = "returning";
+      }
+      break;
+    case "returning":
+      c.x = Math.min(m.pickX, c.x + CRANE_SPEED);
+      if (c.x >= m.pickX) {
+        c.phase = "idle";
+        c.timer = 0;
+      }
+      break;
+  }
+  // Hang the cargo under the magnet: the android first, then everything else.
+  let y = c.y;
+  if (c.player && g.phase === "alive") {
+    p.x = c.x - p.w / 2;
+    p.y = y;
+    p.peak = bottom(p);
+  } else if (c.player) c.player = false;
+  if (c.player || c.phase === "dropping") y += p.h;
+  for (const id of c.cargo) {
+    const b = g.bodies.find((b) => b.id === id);
+    if (!b) continue;
+    b.x = c.x - b.w / 2;
+    b.y = y;
+    b.vx = 0;
+    b.vy = 0;
+    y += b.h;
+  }
+}

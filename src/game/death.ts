@@ -9,6 +9,7 @@ import {
   type DeathEvent,
 } from "./data/deaths";
 import { INTERIOR, tileAt } from "./level/level";
+import { reaction } from "./data/neighbours";
 import { bottom, centerX, isFree } from "./physics";
 import { findSpot, heldBody, place, carryPosition } from "./props";
 import { corpseSize, emit, newPlayer, type Body, type Game } from "./state";
@@ -132,6 +133,16 @@ export function kill(g: Game, cause: Cause, o: KillOptions = {}) {
     y: bottom(corpse),
   };
   emit(g, { type: "death", ...g.last });
+  // Someone who saw it says something.
+  const seen = g.level.neighbours.filter((n) => sees(g, n, corpse));
+  if (seen.length) {
+    const who = seen[g.attempts % seen.length];
+    emit(g, { type: "speech", who: who.id, text: reaction(who.id, g.last.id, g.attempts) });
+  }
+}
+
+function sees(g: Game, n: { x: number; y: number }, b: { x: number; y: number; w: number; h: number }) {
+  return Math.abs(n.x - (b.x + b.w / 2)) <= SIGHT.x && Math.abs(n.y - (b.y + b.h)) <= SIGHT.y && !INTERIOR.has(tileAt(g.level, Math.floor(b.x + b.w / 2), Math.floor(b.y + b.h - 0.5)));
 }
 
 /** Bas wheels the oldest body away once there are too many. */
@@ -143,6 +154,7 @@ function cartOldest(g: Game) {
     g.bodies.splice(g.bodies.indexOf(oldest), 1);
     g.carted++;
     emit(g, { type: "carted", attempt: oldest.attempt ?? 0 });
+    emit(g, { type: "speech", who: "bas", text: `Taking attempt ${oldest.attempt ?? 0}. For scrap. Don't ask.` });
   }
 }
 

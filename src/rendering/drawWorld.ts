@@ -3,7 +3,7 @@ import { tramBox } from "../game/props";
 import { INTERIOR, isSolid, tileAt, type Decor, type Level } from "../game/level/level";
 import { bottom, centerX } from "../game/physics";
 import { android, brush, corpse, glow, poly, printing, type Brush, type Pose, type Rect } from "./pixels";
-import { PRINT_TICKS } from "../game/balance";
+import { KINDNESS_TICKS, PIGEON_GATHER_TICKS, PRINT_TICKS, SOLAR_TICKS } from "../game/balance";
 
 // Side-view renderer: sky and parallax skyline, cutaway building, tiles, decor,
 // props and the android. Placeholder art drawn in code; no neon.
@@ -335,9 +335,7 @@ function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: n
         r(x + 4, yy, 2, 10, "#c9913f");
         r(x - 6, yy + 4, 12, 1, "#a87632");
       }
-      r(hookX - 6, top - 32, x - hookX + 12, 4, "#c9913f");
-      r(hookX, top - 28, 1, 20, "#3b332e");
-      r(hookX - 5, top - 9, 11, 4, "#55504a");
+      r(hookX - 6 * T - 6, top - 32, x - hookX + 6 * T + 12, 4, "#c9913f");
       return;
     }
     case "laundry":
@@ -444,8 +442,41 @@ export function scene() {
     };
     for (const b of g.bodies) if (b.id !== held || g.phase !== "alive") drawBody(b);
     if (g.phase === "alive") {
-      const pose: Pose = p.climbing ? "climb" : !p.grounded ? "air" : Math.abs(p.vx) > 0.4 ? "walk" : "idle";
-      android(c, centerX(p) * T - camX, bottom(p) * T - camY, p.facing < 0, pose === "climb" && p.vy === 0 ? 0 : t, pose, reduced);
+      const pose: Pose = p.climbing ? "climb" : p.zip || p.pigeons > PIGEON_GATHER_TICKS || g.crane?.player ? "air" : !p.grounded ? "air" : Math.abs(p.vx) > 0.4 ? "walk" : "idle";
+      const px = centerX(p) * T - camX,
+        py = bottom(p) * T - camY;
+      if (p.heat > 0) glow(c, px, py - 9, 22, "255,170,90", Math.min(0.7, p.heat / SOLAR_TICKS));
+      android(c, px, py, p.facing < 0, pose === "climb" && p.vy === 0 ? 0 : t, pose, reduced);
+      if (p.zip) {
+        r(px - 1, py - 26, 2, 8, "#5b4a40");
+        r(px - 4, py - 27, 8, 2, "#5b4a40");
+      }
+      if (p.planted) {
+        const grow = Math.min(8, Math.floor(p.planted / 20));
+        r(px - 1, py - 18 - grow, 2, grow, palette.leaf);
+        r(px - 4, py - 18 - grow, 3, 2, palette.leafDark);
+        r(px + 1, py - 17 - grow, 3, 2, palette.leaf);
+      }
+      if (p.damp > 0 && !reduced) r(px - 3 + ((t * 3) % 6), py - 20 + ((t * 2) % 14), 1, 2, "#9cc7cf");
+      if (p.pigeons) {
+        const lifting = p.pigeons > PIGEON_GATHER_TICKS,
+          n = lifting ? 6 : Math.min(6, Math.floor(p.pigeons / 14) + 1);
+        for (let i = 0; i < n; i++) {
+          const flap = reduced ? 0 : Math.floor(t / 4 + i) % 2;
+          const bx = lifting ? px - 14 + i * 5 : px - 16 + i * 6 + (i % 2) * 2,
+            by = lifting ? py - 24 - (i % 2) * 3 : py - 3;
+          r(bx, by, 5, 3, "#8f949a");
+          r(bx + 3, by - 2, 3, 3, "#a5a9ae");
+          if (lifting) r(bx - 1, by - 2 - flap * 2, 3, 2, "#c4c8cc");
+        }
+      }
+      if (g.kindness > 0) {
+        const bowls = Math.min(8, Math.ceil((KINDNESS_TICKS - g.kindness) / 5));
+        for (let i = 0; i < bowls; i++) {
+          const fall = Math.max(0, (KINDNESS_TICKS - g.kindness) * 2 - i * 10);
+          r(px - 5, py - 24 - i * 3 - Math.max(0, 60 - fall), 10, 3, i % 2 ? "#f4efe3" : "#a9cbd8");
+        }
+      }
       const lastBonk = p.bonks.at(-1);
       if (lastBonk && t - lastBonk.tick < 24)
         for (let i = 0; i < 3; i++) {
@@ -477,7 +508,86 @@ export function scene() {
 /** Shared with the DOM shell so it can place speech bubbles over the canvas. */
 export const view = { camX: 0, camY: 0, w: 1, h: 1 };
 
+const NEIGHBOUR_LOOK = {
+  pell: { hair: "#d9d4cc", skin: "#c99572", body: "#c7684d", trim: "#f0dca0", h: 21 },
+  rook: { hair: "#4d7a9c", skin: "#b07a58", body: "#e9b8a8", trim: "#f4efe3", h: 16 },
+  bas: { hair: "#d29a3d", skin: "#a56b4c", body: "#5c7d69", trim: "#7a5a44", h: 25 },
+  juniper: { hair: "#e3c47a", skin: "#8f5e44", body: "#6f9a5a", trim: "#4f7444", h: 22 },
+} as const;
+
+function drawNeighbour(r: Rect, id: keyof typeof NEIGHBOUR_LOOK, x: number, y: number, t: number, reduced: boolean) {
+  const L = NEIGHBOUR_LOOK[id],
+    h = L.h,
+    bob = reduced ? 0 : Math.floor(t / 45 + x) % 2,
+    top = y - h - bob;
+  const w = id === "bas" ? 14 : id === "rook" ? 9 : 11;
+  r(x - w / 2, top + 7, w, h - 9, L.body); // body
+  r(x - w / 2 + 2, y - 3, 3, 3, "#3b332e"); // feet
+  r(x + w / 2 - 5, y - 3, 3, 3, "#3b332e");
+  r(x - 4, top + 1, 8, 7, L.skin); // head
+  r(x + 1, top + 4, 1, 1, "#2a2724");
+  r(x - 2, top + 4, 1, 1, "#2a2724");
+  switch (id) {
+    case "pell":
+      r(x - 5, top - 1, 10, 3, L.hair);
+      r(x - 2, top - 4, 5, 4, L.hair); // bun
+      r(x - 4, top + 10, 8, h - 14, L.trim); // apron
+      break;
+    case "rook":
+      r(x - 5, top, 10, 3, L.hair); // cap
+      r(x + 3, top + 2, 4, 1, L.hair);
+      r(x + 4, top + 9, 5, 6, L.trim); // notebook
+      r(x + 5, top + 11, 3, 1, "#7a5a44");
+      break;
+    case "bas":
+      r(x - 5, top - 1, 10, 3, L.hair); // cap
+      r(x - 4, top + 6, 8, 4, "#6b4a33"); // beard
+      r(x - 6, top + 9, 2, 8, L.trim); // straps
+      r(x + 4, top + 9, 2, 8, L.trim);
+      break;
+    case "juniper":
+      r(x - 8, top, 16, 2, L.hair); // straw hat
+      r(x - 4, top - 3, 8, 3, L.hair);
+      r(x + 6, top + 12, 6, 5, "#7a8f8a"); // watering can
+      r(x + 11, top + 11, 3, 2, "#7a8f8a");
+      break;
+  }
+}
+
 function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t: number, reduced: boolean) {
+  for (const n of g.level.neighbours)
+    drawNeighbour(r, n.id, Math.round(n.x * T - camX), Math.round(n.y * T - camY), t, reduced);
+  const crane = g.crane,
+    cm = g.level.machines.crane;
+  if (crane && cm) {
+    const mx = Math.round(crane.x * T - camX),
+      my = Math.round(crane.y * T - camY),
+      top = Math.round((cm.liftY - 1.1) * T - camY);
+    r(mx - 5, top - 3, 10, 4, "#55504a"); // trolley
+    r(mx, top, 1, my - 6 - top, "#3b332e");
+    r(mx - 8, my - 6, 16, 6, "#55504a");
+    r(mx - 7, my - 2, 14, 2, crane.phase === "lowering" || crane.phase === "lifting" || crane.phase === "moving" ? "#e05a45" : "#8e8a80");
+  }
+  const vm = g.level.machines.vending,
+    v = g.vending;
+  if (vm && v) {
+    const x = Math.round(vm.x * T - camX),
+      y = Math.round(vm.y * T - camY);
+    const shake = v.phase === "up" && v.shakes && !reduced ? (Math.floor(t / 2) % 2 ? 1 : -1) * Math.min(2, v.shakes) : 0;
+    const angle = v.phase === "tipping" ? (v.timer / 18) * (Math.PI / 2) * v.dir : v.phase === "down" ? (Math.PI / 2) * v.dir : 0;
+    c.save();
+    c.translate(x + shake + (v.dir > 0 ? 9 : -9) * (angle ? 1 : 0), y);
+    c.rotate(angle);
+    c.translate(angle ? (v.dir > 0 ? -9 : 9) : 0, 0);
+    const rr = brush(c);
+    rr(-9, -30, 18, 30, "#d65f49");
+    rr(-7, -27, 10, 18, "#f1e6cf");
+    for (let i = 0; i < 3; i++) rr(-6, -25 + i * 6, 8, 3, palette.cloth[i]);
+    rr(5, -26, 2, 8, "#3b332e");
+    rr(-7, -6, 10, 3, "#3b332e");
+    c.restore();
+  }
+
   const tram = tramBox(g);
   if (tram) {
     const x = Math.round(tram.x * T - camX),

@@ -1,6 +1,6 @@
 import { CORPSE_SIZES, PLAYER_H, PLAYER_W, PROP_SIZES } from "./balance";
 import { buildBlock } from "./level/block";
-import type { Level, PropKind } from "./level/level";
+import type { Level, NeighbourId, PropKind } from "./level/level";
 import type { Box } from "./physics";
 import type { Cause, CorpsePose, CorpseTint, DeathId } from "./data/deaths";
 
@@ -76,8 +76,10 @@ export type GameEvent =
   | { type: "tramBell" }
   | { type: "compactorWarn" }
   | { type: "compactorSlam" }
+  | { type: "thud" }
   | { type: "interact"; label: string }
-  | { type: "speech"; who: string; text: string }
+  | { type: "openBoard" }
+  | { type: "speech"; who: NeighbourId | "you"; text: string }
   | { type: "twist"; step: number };
 
 export const corpseSize = (pose: CorpsePose) => CORPSE_SIZES[pose];
@@ -158,6 +160,25 @@ export function createGame(level: Level = buildBlock()) {
           trips: 0,
         }
       : null,
+    talks: { pell: 0, rook: 0, bas: 0, juniper: 0 } as Record<NeighbourId, number>,
+    /** 0 before the twist, 1 while feedstock is low, 2 after it. */
+    twist: 0,
+    twistTicks: 0,
+    vending: m.vending
+      ? { shakes: 0, phase: "up" as "up" | "tipping" | "down", timer: 0, dir: 1 as 1 | -1 }
+      : null,
+    crane: m.crane
+      ? {
+          phase: "idle" as "idle" | "lowering" | "lifting" | "moving" | "dropping" | "returning",
+          timer: 0,
+          x: m.crane.pickX,
+          y: m.crane.liftY,
+          cargo: [] as number[],
+          player: false,
+        }
+      : null,
+    /** Pell's bowls, on their way to whoever brought her a crate. */
+    kindness: 0,
     compactor: m.compactor
       ? {
           plate: m.compactor.top,

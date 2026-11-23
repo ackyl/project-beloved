@@ -18,6 +18,12 @@ import { GameCanvas } from "./GameCanvas";
 import { Icon } from "./Icon";
 import { DeathCard } from "./DeathCard";
 import { DeathBoard } from "./DeathBoard";
+import { NEIGHBOURS } from "../game/data/neighbours";
+import { T, view } from "../rendering/drawWorld";
+import { centerX } from "../game/physics";
+
+type Bubble = { key: number; who: string; text: string; until: number };
+const BUBBLE_MS = 3800;
 
 const pad = (n: number) => String(n).padStart(3, "0");
 const moveKeys: Record<string, Direction> = {
@@ -67,11 +73,14 @@ function Game() {
     [audio, setAudio] = useState(false),
     [card, setCard] = useState<LastDeath | null>(null),
     [hint, setHint] = useState<string | null>(null),
+    [bubbles, setBubbles] = useState<Bubble[]>([]),
     [, setRevision] = useState(0),
     [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const dialog = useRef<HTMLDivElement>(null),
     returnFocus = useRef<HTMLElement | null>(null),
-    cardTimer = useRef(0);
+    cardTimer = useRef(0),
+    bubbleKey = useRef(0),
+    bubbleLayer = useRef<HTMLDivElement>(null);
   const paused = modal !== null;
 
   const open = (next: Modal) => {
@@ -188,8 +197,24 @@ function Game() {
         sound.warn();
         return;
       case "compactorSlam":
+      case "thud":
         sound.slam();
         return;
+      case "interact":
+        sound.bonk();
+        return;
+      case "openBoard":
+        open("board");
+        return;
+      case "speech": {
+        sound.speak();
+        const until = performance.now() + BUBBLE_MS + e.text.length * 25;
+        setBubbles((list) => [
+          ...list.filter((b) => b.who !== e.who),
+          { key: ++bubbleKey.current, who: e.who, text: e.text, until },
+        ]);
+        return;
+      }
       default:
         return;
     }
@@ -199,6 +224,18 @@ function Game() {
     for (const e of drainEvents(g)) handle(e);
     const next = g.phase === "alive" ? prompt(g) : null;
     if (next !== hint) setHint(next);
+    // Keep speech bubbles over whoever is talking.
+    const now = performance.now();
+    if (bubbles.some((b) => b.until < now)) setBubbles((list) => list.filter((b) => b.until >= now));
+    for (const el of bubbleLayer.current?.children ?? []) {
+      const who = (el as HTMLElement).dataset.who;
+      const n = g.level.neighbours.find((n) => n.id === who);
+      const p = g.player;
+      const x = n ? n.x : centerX(p),
+        y = n ? n.y - 1.7 : p.y - 0.4;
+      (el as HTMLElement).style.left = (((x * T - view.camX) / view.w) * 100).toFixed(2) + "%";
+      (el as HTMLElement).style.top = (((y * T - view.camY) / view.h) * 100).toFixed(2) + "%";
+    }
   };
 
   const found = uniqueDeaths(g);
@@ -251,6 +288,13 @@ function Game() {
             <kbd>E</kbd> {hint}
           </p>
         ) : null}
+        <div className="bubbles" ref={bubbleLayer} aria-live="polite">
+          {bubbles.map((b) => (
+            <p key={b.key} className={`bubble ${b.who}`} data-who={b.who}>
+              <b>{b.who === "you" ? "You" : NEIGHBOURS[b.who as keyof typeof NEIGHBOURS].name}</b> {b.text}
+            </p>
+          ))}
+        </div>
         {card ? <DeathCard death={card} /> : null}
         <ul className="legend" aria-label="Controls">
           <li>

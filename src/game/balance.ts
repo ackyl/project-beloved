@@ -69,3 +69,21 @@ export const COMPACTOR_WARN_TICKS = 90;
 export const COMPACTOR_SLAM_SPEED = 0.6;
 export const COMPACTOR_HOLD_TICKS = 45;
 export const COMPACTOR_RISE_SPEED = 0.1;
+
+// Chunk 3: stunts, machines and neighbours.
+export const INTERACT_RANGE = { x: 1.4, y: 1.3 };
+export const SOLAR_TICKS = 100;
+export const DRIP_TICKS = 240;
+export const BORED_TICKS = 60 * 180;
+export const PLANT_TICKS = 180;
+export const ZIP_TICKS = 80;
+/** Pigeons gather for this long; moving scares them off. Then they lift. */
+export const PIGEON_GATHER_TICKS = 90;
+export const PIGEON_LIFT_SPEED = 5;
+export const VENDING_SHAKES = 4;
+export const VENDING_TIP_TICKS = 18;
+export const VENDING_DOWN_TICKS = 360;
+export const KINDNESS_TICKS = 45;
+export const CRANE_IDLE_TICKS = 600;
+export const CRANE_SPEED = 0.09;
+export const SPEECH_TICKS = 210;

@@ -18,7 +18,7 @@ Tilemap and collision, walking and jumping (with coyote time and a jump buffer),
 Hazard events, the freeze-and-sparks transition, corpse entities (stacking, grabbing, standing on them, and the cap with Bas's cart), the replicator respawn, the death card, the Death Board overlay and the first 8 deaths.
 **Tests:** each death predicate fires exactly for its setup; repeats don't re-award; a 5-corpse stack is stable and climbable; the death-to-respawn cycle takes at most 3 s.
 
-## Chunk 3: The block and the neighbours
+## Chunk 3: The block and the neighbours ✅
 
 The authored Building, Street and Scrapyard; four neighbours with state-keyed lines; Rook's ratings and hints; and the remaining 12 deaths, including the corpse-based and secret ones.
 **Tests:** every death is reachable from spawn, using simulated journeys driven by scripted input; neighbour lines resolve for every state.
