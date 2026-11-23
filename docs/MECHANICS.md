@@ -10,7 +10,7 @@
 - **Dropping below you:** in the air, use Down + Q to drop what you carry straight under your feet, then land on it. That is how towers of old bodies get built.
 - **Placement is always valid.** A released prop goes to the first free spot: where it was carried (when throwing) or in front of your feet (when setting down). If that spot is blocked, it goes inside your own box, which is always free.
 - **Interact (E):** talk to neighbours and use objects like the vending machine, crane controls, fryer or replicator.
-- **Controls:** Left and Right to walk, Up to jump or climb, Down to climb down or drop through a platform, Q to grab or throw, E to interact, Tab for the Death Board, Esc to pause. On mobile, the right joystick supplies the arrow directions and the left buttons supply Grab / Throw and Use.
+- **Controls:** Left and Right to walk, Up to jump or climb, Down to climb down or drop through a platform, Q to grab or throw, E to interact, Tab for the Death Board, Esc to pause. On mobile, the right D-pad supplies the arrow directions and the left buttons supply Grab / Throw and Use.
 - When two opposing directions are held, the most recently pressed one wins. Releasing it resumes the other.
 - **Ladders:** press Up beside a ladder or Down at its top to climb. The top of a ladder works as a one-way platform. Release Up or Down and press Left or Right to let go.
 

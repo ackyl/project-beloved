@@ -63,6 +63,7 @@ p {
 }
 
 main {
+  position: relative;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -130,6 +131,7 @@ main {
 }
 .scrim {
   position: fixed;
+  z-index: 2;
   inset: 0;
   display: grid;
   place-items: center;
@@ -494,6 +496,114 @@ kbd {
   outline-color: #8fbfb3;
 }
 
+.guide {
+  width: min(520px, 100%);
+  max-height: min(100%, calc(100dvh - 32px));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border-top: 2px solid var(--teal);
+}
+
+.guide-header,
+.guide-content,
+.guide-footer {
+  padding-inline: clamp(16px, 5vw, 28px);
+}
+
+.guide-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 17px;
+  padding-bottom: 12px;
+}
+
+.guide-secondary {
+  min-height: 44px;
+  padding-inline: 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 600;
+}
+
+.guide-secondary:hover {
+  color: var(--paper);
+  border-color: var(--muted);
+}
+
+.guide-header h2 {
+  margin-top: 3px;
+  font-size: clamp(24px, 5vw, 32px);
+  line-height: 1.08;
+  outline: none;
+}
+
+.guide-content {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 14px;
+}
+
+.guide-content > p + p {
+  margin-top: 9px;
+}
+
+.guide-controls {
+  margin: 12px 0 10px;
+}
+
+.guide-controls > div {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  align-items: baseline;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-block: 5px;
+}
+
+.guide-controls dt {
+  color: var(--teal);
+  font-weight: 600;
+}
+
+.guide-controls dd {
+  margin: 0;
+}
+
+.guide-controls kbd:not(.guide-key),
+.guide-tip kbd {
+  display: inline-block;
+}
+
+.guide-tip {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.guide-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 10px;
+  padding-bottom: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.guide-continue {
+  min-width: 84px;
+  min-height: 44px;
+  margin-left: auto;
+}
+
+.guide-touch {
+  display: none;
+}
+
 .touch-controls {
   display: none;
 }
@@ -611,38 +721,62 @@ kbd {
     filter: brightness(0.85);
   }
 
-  .joystick {
-    position: relative;
+  .guide-key {
+    display: none;
+  }
+
+  .guide-touch {
+    display: inline;
+  }
+
+  .dpad {
+    --pad-key: 44px;
     display: grid;
-    place-items: center;
-    width: clamp(76px, 14dvh, 112px);
-    aspect-ratio: 1;
+    grid-template-columns: repeat(3, var(--pad-key));
+    grid-template-rows: repeat(2, var(--pad-key));
+    gap: 4px;
     flex: none;
+  }
+
+  .dpad button {
     border: 1px solid #61768a;
-    border-radius: 50%;
-    background: radial-gradient(circle, #152032 0 49%, #233044 50% 100%);
-    color: #bacddb;
+    border-bottom-width: 3px;
+    border-radius: 8px;
+    background: #2a394c;
+    color: var(--paper);
+    font: 22px/1 var(--mono);
     -webkit-tap-highlight-color: transparent;
   }
 
-  .joystick span {
-    position: absolute;
-    pointer-events: none;
+  .dpad button[data-pressed="true"] {
+    border-color: var(--teal);
+    background: #456579;
+    transform: translateY(1px);
   }
 
-  .stick-up { top: 2px; }
-  .stick-down { bottom: 2px; }
-  .stick-left { left: 5px; }
-  .stick-right { right: 5px; }
+  .dpad-up { grid-area: 1 / 2; }
+  .dpad-left { grid-area: 2 / 1; }
+  .dpad-down { grid-area: 2 / 2; }
+  .dpad-right { grid-area: 2 / 3; }
 
-  .stick-knob {
-    width: 39%;
-    aspect-ratio: 1;
-    border: 1px solid #809faa;
-    border-bottom-width: 3px;
-    border-radius: 50%;
-    background: #42596c;
-    transform: translate(var(--stick-x, 0), var(--stick-y, 0));
+  @media (orientation: landscape) and (max-height: 440px) {
+    .touch-controls {
+      position: absolute;
+      inset: auto 0 0;
+      border: 0;
+      background: transparent;
+      pointer-events: none;
+    }
+
+    .touch-actions,
+    .dpad button {
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    .guide-header {
+      padding-block: 10px;
+    }
   }
 }
 

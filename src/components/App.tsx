@@ -13,6 +13,8 @@ import { BOARD } from "../game/data/deaths";
 import type { LastDeath } from "../game/state";
 import { Sound } from "../game/sound";
 import { TouchControls } from "./TouchControls";
+import { HowToPlay } from "./HowToPlay";
+import { hasSeenGuide, rememberGuide } from "../platform/guide";
 import { GameCanvas } from "./GameCanvas";
 import { Icon } from "./Icon";
 import { DeathCard } from "./DeathCard";
@@ -36,7 +38,7 @@ const moveKeys: Record<string, Direction> = {
 };
 const CARD_MS = 4800;
 
-type Modal = "pause" | "board" | "paper" | "restart" | null;
+type Modal = "welcome" | "guide" | "pause" | "board" | "paper" | "restart" | null;
 
 /** Local storage, or null where the browser blocks it. */
 function storage(): Store | null {
@@ -50,7 +52,7 @@ function storage(): Store | null {
 export function App() {
   const [g, setG] = useState<GameState>(() => load(storage()) ?? createGame()),
     [dark, setDark] = useState<{ who: string; text: string }[] | null>(null),
-    [modal, setModal] = useState<Modal>(null),
+    [modal, setModal] = useState<Modal>(() => hasSeenGuide(storage()) ? null : "welcome"),
     [sound] = useState(() => new Sound()),
     [audio, setAudio] = useState(false),
     [card, setCard] = useState<LastDeath | null>(null),
@@ -109,7 +111,8 @@ export function App() {
 
   useEffect(() => {
     if (modal) {
-      dialog.current?.querySelector<HTMLElement>("button")?.focus({ preventScroll: true });
+      if (modal === "welcome") rememberGuide(storage());
+      dialog.current?.querySelector<HTMLElement>("[data-dialog-focus], button")?.focus({ preventScroll: true });
       return;
     }
     returnFocus.current?.focus({ preventScroll: true });
@@ -124,7 +127,7 @@ export function App() {
       if (e.key === "Escape") {
         if (down && !e.repeat) {
           e.preventDefault();
-          open(modal ? null : "pause");
+          open(modal === "guide" ? "pause" : modal ? null : "pause");
         }
         return;
       }
@@ -362,7 +365,12 @@ export function App() {
       <TouchControls game={g} carrying={carrying} paused={paused} />
       {modal ? (
         <div className="scrim" ref={dialog}>
-          {modal === "board" ? (
+          {modal === "welcome" || modal === "guide" ? (
+            <HowToPlay
+              play={() => open(null)}
+              skip={() => open(modal === "guide" ? "pause" : null)}
+            />
+          ) : modal === "board" ? (
             <DeathBoard g={g} close={() => open(null)} />
           ) : modal === "paper" ? (
             <div className="dialog paper-reveal" role="dialog" aria-modal="true" aria-labelledby="paper-title">
@@ -409,6 +417,9 @@ export function App() {
               <div className="row">
                 <button className="text-button" onClick={() => open(null)}>
                   Resume
+                </button>
+                <button className="text-button quiet" onClick={() => open("guide")}>
+                  How to Play
                 </button>
                 <button className="text-button quiet" onClick={() => setModal("restart")}>
                   Start over…

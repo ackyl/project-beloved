@@ -1,6 +1,12 @@
-import { useEffect, useRef, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { command, type Direction, type Game } from "../game/simulation";
-import { joystickDirections } from "../platform/joystick";
+
+const arrows: { dir: Direction; glyph: string; label: string }[] = [
+  { dir: "up", glyph: "↑", label: "Jump or climb up" },
+  { dir: "left", glyph: "←", label: "Walk left" },
+  { dir: "down", glyph: "↓", label: "Climb down or drop" },
+  { dir: "right", glyph: "→", label: "Walk right" },
+];
 
 export function TouchControls({
   game,
@@ -11,65 +17,47 @@ export function TouchControls({
   carrying: boolean;
   paused: boolean;
 }) {
-  const stick = useRef<HTMLDivElement>(null);
-  const pointer = useRef<number | null>(null);
-  const directions = useRef<Direction[]>([]);
+  const pointers = useRef(new Map<number, { dir: Direction; button: HTMLButtonElement }>());
+  const [pressed, setPressed] = useState<Direction[]>([]);
 
-  function move(next: Direction[], x = 0, y = 0) {
-    for (const dir of directions.current) {
-      if (!next.includes(dir)) command(game, { type: "move", dir, pressed: false, source: `touch-${dir}` });
-    }
-    for (const dir of next) {
-      if (!directions.current.includes(dir)) command(game, { type: "move", dir, pressed: true, source: `touch-${dir}` });
-    }
-    directions.current = next;
-    stick.current?.style.setProperty("--stick-x", `${x}px`);
-    stick.current?.style.setProperty("--stick-y", `${y}px`);
+  function updatePressed() {
+    setPressed(Array.from(pointers.current.values(), ({ dir }) => dir));
   }
 
-  function release() {
-    const id = pointer.current;
-    if (id === null) return;
-    pointer.current = null;
-    if (stick.current?.hasPointerCapture(id)) stick.current.releasePointerCapture(id);
-    move([]);
+  function start(event: PointerEvent<HTMLButtonElement>, dir: Direction) {
+    if (paused || event.button !== 0 || pointers.current.has(event.pointerId)) return;
+    event.preventDefault();
+    const button = event.currentTarget;
+    button.setPointerCapture(event.pointerId);
+    pointers.current.set(event.pointerId, { dir, button });
+    command(game, { type: "move", dir, pressed: true, source: `touch-${event.pointerId}` });
+    updatePressed();
+  }
+
+  function release(id: number) {
+    const touch = pointers.current.get(id);
+    if (!touch) return;
+    pointers.current.delete(id);
+    if (touch.button.hasPointerCapture(id)) touch.button.releasePointerCapture(id);
+    command(game, { type: "move", dir: touch.dir, pressed: false, source: `touch-${id}` });
+    updatePressed();
   }
 
   useEffect(() => {
-    if (paused) release();
-    window.addEventListener("blur", release);
-    window.addEventListener("resize", release);
-    document.addEventListener("visibilitychange", release);
+    function clear() {
+      for (const id of pointers.current.keys()) release(id);
+    }
+
+    window.addEventListener("blur", clear);
+    window.addEventListener("resize", clear);
+    document.addEventListener("visibilitychange", clear);
     return () => {
-      window.removeEventListener("blur", release);
-      window.removeEventListener("resize", release);
-      document.removeEventListener("visibilitychange", release);
-      release();
+      window.removeEventListener("blur", clear);
+      window.removeEventListener("resize", clear);
+      document.removeEventListener("visibilitychange", clear);
+      clear();
     };
   }, [game, paused]);
-
-  function track(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerId !== pointer.current) return;
-    const box = event.currentTarget.getBoundingClientRect();
-    const radius = Math.min(box.width, box.height) / 2;
-    if (!radius) return;
-    const x = (event.clientX - box.left - box.width / 2) / radius;
-    const y = (event.clientY - box.top - box.height / 2) / radius;
-    const travel = radius * 0.55 / Math.max(1, Math.hypot(x, y));
-    move(joystickDirections(x, y), x * travel, y * travel);
-  }
-
-  function start(event: PointerEvent<HTMLDivElement>) {
-    if (paused || pointer.current !== null || event.button !== 0) return;
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    pointer.current = event.pointerId;
-    track(event);
-  }
-
-  function finish(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerId === pointer.current) release();
-  }
 
   return (
     <div className="touch-controls" role="group" aria-label="Touch controls" inert={paused}>
@@ -79,23 +67,21 @@ export function TouchControls({
         </button>
         <button type="button" onClick={() => command(game, { type: "interact" })}>Use</button>
       </div>
-      <div
-        className="joystick"
-        role="group"
-        aria-label="Movement joystick. Drag left or right to walk, up to jump or climb, and down to descend."
-        ref={stick}
-        onPointerDown={start}
-        onPointerMove={track}
-        onPointerUp={finish}
-        onPointerCancel={finish}
-        onLostPointerCapture={finish}
-        onContextMenu={(event) => event.preventDefault()}
-      >
-        <span className="stick-up" aria-hidden="true">↑</span>
-        <span className="stick-left" aria-hidden="true">←</span>
-        <span className="stick-right" aria-hidden="true">→</span>
-        <span className="stick-down" aria-hidden="true">↓</span>
-        <span className="stick-knob" aria-hidden="true" />
+      <div className="dpad" role="group" aria-label="Movement D-pad">
+        {arrows.map(({ dir, glyph, label }) => (
+          <button
+            key={dir}
+            className={`dpad-${dir}`}
+            type="button"
+            aria-label={label}
+            data-pressed={pressed.includes(dir)}
+            onPointerDown={(event) => start(event, dir)}
+            onPointerUp={(event) => release(event.pointerId)}
+            onPointerCancel={(event) => release(event.pointerId)}
+            onLostPointerCapture={(event) => release(event.pointerId)}
+            onContextMenu={(event) => event.preventDefault()}
+          >{glyph}</button>
+        ))}
       </div>
     </div>
   );

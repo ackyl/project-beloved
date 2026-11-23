@@ -1,6 +1,6 @@
 # Project Beloved
 
-A desktop 2D sandbox platformer about a cheerful android that read **"ONLY HUMANS DIE"** on a torn scrap of paper and is now very scientifically trying to become human. Its replicator keeps printing new copies. The old bodies stay where they fell. The neighbours have opinions.
+A 2D sandbox platformer about a cheerful android that read **"ONLY HUMANS DIE"** on a torn scrap of paper and is now very scientifically trying to become human. Its replicator keeps printing new copies. The old bodies stay where they fell. The neighbours have opinions.
 
 > **Status:** the v0.2 slice is playable end to end. It has 20 deaths to find, old bodies you can stack, four neighbours, the twist and local save. The block is rendered as a sci-fi city in pixel art. See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) and [the development status](docs/DEVELOPMENT_STATUS.md).
 
@@ -17,7 +17,7 @@ The same game runs on desktop and mobile. Touch controls appear on touch-only de
 
 ## Controls
 
-On mobile, use the right joystick to walk, jump and climb. The left buttons grab or throw objects and talk to neighbours or use nearby objects. Hold the joystick up or down while throwing to throw high or set the item down.
+On mobile, use the right D-pad to walk, jump and climb. The left buttons grab or throw objects and talk to neighbours or use nearby objects. Hold Up or Down on the D-pad while throwing to throw high or set the item down.
 
 | Action | Keyboard | Available |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ On mobile, use the right joystick to walk, jump and climb. The left buttons grab
 | Death Board | Tab | Now |
 | Skip to the replicator | ↑, Q or E while dead | Now |
 
-Audio starts muted. Progress saves in the browser. **Start over…** in the pause menu erases it.
+The two-page intro opens automatically once per browser. Open it again from Pause. Audio starts muted. Progress saves in the browser. **Start over…** in the pause menu erases it.
 
 ## Docs
 

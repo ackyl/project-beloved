@@ -12,11 +12,11 @@
 src/
   main.tsx
   components/        React shell
-    App.tsx            desktop gate, top bar, input, events, save, dialogs, speech bubbles
+    App.tsx            top bar, input, events, save, dialogs, speech bubbles
     GameCanvas.tsx     fixed-step loop and canvas sizing
     DeathCard.tsx      the card after each death
     DeathBoard.tsx     the board overlay (Tab)
-    TouchControls.tsx  On-screen joystick and action buttons
+    TouchControls.tsx  On-screen D-pad and action buttons
     Icon.tsx
   game/              simulation, free of React and DOM (except sound.ts)
     balance.ts         tunables
