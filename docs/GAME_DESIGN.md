@@ -1,6 +1,6 @@
 # PROJECT BELOVED — GAME DESIGN
 
-**Status:** v0.2 design, in development. It replaces the v0.1 mining slice *Below, Beloved*, which remains in git history at `ca6f8c1`.
+**Status:** v0.2 slice implemented (Chunks 0–4). It replaces the v0.1 mining slice *Below, Beloved*, which remains in git history at `ca6f8c1`.
 **Genre:** 2D side-view sandbox platformer. Absurdist comedy with a heartwarming core.
 **Platform:** Desktop only. Narrow or touch-only devices see a "desktop experience" screen.
 
@@ -41,7 +41,7 @@ A small playable area, about 4–5 screens wide and 3 screens tall. The level is
 
 Their lines are short and state-driven. They change with the attempt count, specific deaths and twist progress. There are no dialogue trees.
 
-## The twist (draft, pending review)
+## The twist (implemented as drafted; open to revision)
 
 **Setup, which runs throughout the game:**
 - Bas keeps carting old bodies away.
@@ -49,7 +49,7 @@ Their lines are short and state-driven. They change with the attempt count, spec
 - Pell's pots start disappearing.
 - Juniper's planter grows a sprout with a tiny bolt for a leaf.
 
-**Trigger:** after about 12 unique deaths, the replicator starts to sputter: *"FEEDSTOCK LOW."* Bas grumbles that he's "out of you." The android is thrilled. Surely the next death will finally stick.
+**Trigger:** after 12 unique deaths, the replicator starts to sputter: *"FEEDSTOCK LOW."* Bas grumbles that he's "out of you." The android is thrilled. Surely the next death will finally stick.
 
 **The beat:**
 1. The next death plays out with no ding. The screen goes black, and you hear only the neighbours' muffled voices, arguing and clanking.

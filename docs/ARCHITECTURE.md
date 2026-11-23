@@ -11,42 +11,47 @@
 ```text
 src/
   main.tsx
-  components/      React shell
-    App.tsx          desktop gate, top bar, pause
-    GameCanvas.tsx   fixed-step loop and canvas sizing
-    DesktopOnly.tsx  "desktop experience" screen
+  components/        React shell
+    App.tsx            desktop gate, top bar, input, events, save, dialogs, speech bubbles
+    GameCanvas.tsx     fixed-step loop and canvas sizing
+    DeathCard.tsx      the card after each death
+    DeathBoard.tsx     the board overlay (Tab)
+    DesktopOnly.tsx    "desktop experience" screen
     Icon.tsx
-  game/            simulation, free of React and DOM
-    balance.ts       tunables
-    simulation.ts    state, commands, tick, player, grab and throw, props
-    physics.ts       box-versus-tile collision, one-way surfaces, isFree()
-    level/level.ts   tile legend, Level type, parseLevel() and the Grid builder
-    level/block.ts   the authored block (112 × 33 tiles)
-    sound.ts         optional Web Audio adapter (the one DOM-touching game file)
-  platform/        browser capability checks
-    device.ts        isDesktop() and the override
-  rendering/       Canvas drawing
-    drawWorld.ts     camera, sky and parallax skyline, tiles, decor, props, android
-    pixels.ts        brush, sprite, glow, android sprite and walk poses
+  game/              simulation, free of React and DOM (except sound.ts)
+    balance.ts         tunables
+    simulation.ts      commands and the tick order
+    state.ts           game state, bodies, player, events
+    input.ts           most-recent-direction axis
+    physics.ts         box-versus-tile collision, one-way surfaces
+    player.ts          walking, jumping, ladders, fall tracking
+    props.ts           grab, throw, placement, body physics, bonks
+    death.ts           kill, corpses, the cap, respawn, watchers
+    machines.ts        tram, compactor, crane, vending machine, zones, bonks, falls
+    stunts.ts          zip line, planter, pigeons, solar, drip, power line, boredom, kindness
+    interact.ts        E targets and prompts
+    twist.ts           feedstock, the dark, the paper, the party
+    save.ts            versioned local save with validation
+    sound.ts           optional Web Audio cues
+    data/deaths.ts     the Death Board registry
+    data/neighbours.ts state-keyed lines and reactions
+    level/level.ts     tile legend, Level type, parser and builder
+    level/block.ts     the authored block: tiles, props, decor, zones, machines, neighbours
+  platform/device.ts isDesktop() and the override
+  rendering/
+    drawWorld.ts       camera, parallax, tiles, decor, machines, neighbours, bodies, effects
+    pixels.ts          brush, sprite, glow, android, corpse poses and tints, printing
   styles/main.css
   tests/
 ```
-
-Files planned for later chunks:
-
-| Chunk | Files |
-| --- | --- |
-| 2 | `game/data/deaths.ts` (death registry and predicates), `components/DeathCard.tsx`, `components/DeathBoard.tsx` |
-| 3 | `game/data/neighbours.ts` (state-keyed lines), `components/SpeechBubble.tsx` |
-| 4 | `game/twist.ts`, `game/save.ts` |
 
 ## State and commands
 
 `keyboard → typed command → simulation validates → next state + events → Canvas and React render`
 
 - **Game state:** the player (position, velocity, facing, grounded, held entity), props, corpses, hazard states, unlocked deaths and repeat counts, the attempt count, neighbour memory flags, twist state and the tick clock.
-- **Commands:** `move` (direction pressed or released, with a key source), `jump` (pressed or released), `grab` and `clear` exist now. `interact` and `skipCard` arrive in Chunk 2. The simulation rejects any command that is invalid in the current state.
-- **Events:** `death`, `respawn`, `award`, `speech` and `twistStep`. React and audio subscribe to events and never read per-frame state.
+- **Commands:** `move` (direction pressed or released, with a key source), `jump` (pressed or released), `grab`, `interact` and `clear`. While dead, jump, grab or interact skips ahead to the replicator. The simulation rejects any command that is invalid in the current state.
+- **Events:** `death`, `respawn`, `carted`, `bonk`, `speech`, `twist`, `openBoard`, and sound cues (`jump`, `land`, `grab`, `throw`, `tramBell`, `compactorWarn`, `compactorSlam`, `thud`, `interact`). React and audio subscribe to events and never read per-frame state.
 - **Loop:** `requestAnimationFrame` is the clock. The simulation advances in fixed 60 Hz steps and clamps long frames. The loop pauses for menus, a hidden tab and a blurred window.
 - **Determinism:** the same starting state and the same command sequence must produce the same result. Tests drive full journeys with scripted input rather than injecting state.
 
@@ -58,9 +63,9 @@ Files planned for later chunks:
 - Speeds are capped so nothing travels more than 0.37 tiles per tick. One leading-edge check per axis therefore can't skip a tile.
 - If stacking proves unworkable, measure first before adding a library.
 
-## Saved state (Chunk 4)
+## Saved state
 
-- One versioned local save payload holding the attempt count, unlocked deaths, repeat counts, corpses, neighbour memory flags and twist state.
+- One versioned local save payload (`project-beloved/save/v1`) holding the attempt count, the board with repeat counts, every body and prop, talk counts, crumbs, twist state and the rebuilt flag.
 - Validate it on load and fall back to a fresh game on any mismatch. Wrap every storage access in try/catch.
 
 ## Desktop gate

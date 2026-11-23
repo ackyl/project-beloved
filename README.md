@@ -2,7 +2,7 @@
 
 A desktop 2D sandbox platformer about a cheerful android that read **"ONLY HUMANS DIE"** on a torn scrap of paper and is now very scientifically trying to become human. Its replicator keeps printing new copies. The old bodies stay where they fell. The neighbours have opinions.
 
-> **Status:** early development. Chunks 0 and 1 are done: you can walk, jump, climb and throw things around the block. Nothing can die yet. See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) and [the development status](docs/DEVELOPMENT_STATUS.md).
+> **Status:** the v0.2 slice is playable end to end. It has 20 deaths to find, old bodies you can stack, four neighbours, the twist and local save. Art is placeholder. See [the implementation plan](docs/IMPLEMENTATION_PLAN.md) and [the development status](docs/DEVELOPMENT_STATUS.md).
 
 ## Run locally
 
@@ -24,10 +24,11 @@ The game is desktop only. Narrow windows and touch-only devices show a "desktop 
 | Climb ladders, drop through platforms | W/S or up/down arrows | Now |
 | Jump | Space or K | Now |
 | Grab, throw | Shift or J. Hold W to throw high, S to set down. | Now |
-| Interact | E | Chunk 2 |
-| Death Board | Tab | Chunk 2 |
+| Use, talk | E | Now |
+| Death Board | Tab | Now |
+| Skip to the replicator | Space, Shift or E while dead | Now |
 
-Audio starts muted.
+Audio starts muted. Progress saves in the browser. **Start over…** in the pause menu erases it.
 
 ## Docs
 

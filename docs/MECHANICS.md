@@ -45,41 +45,50 @@ Every death increments the attempt counter shown in the top bar.
 
 ## The Death Board (authored list)
 
-- Deaths are a hand-written registry (`src/game/data/deaths.ts`). Each entry has an id, a name, a joke line, Rook's hint, a star rating and a **trigger predicate** over the death event.
-- A death is awarded once. Later repeats only add to its repeat count.
-- Locked slots show a silhouette and Rook's hint.
-- The first slice ships **20 deaths**: about 6 obvious, 10 clever and 4 secret.
+- Deaths are a hand-written registry (`src/game/data/deaths.ts`). Each entry has an id, a name, a joke line, the android's "learned" log line, Rook's hint, a star rating and a **trigger predicate** over the death event. The first match wins, and specific combinations are checked before the general causes they refine.
+- A death is awarded once. Later repeats only add to its repeat count. A death that matches nothing still counts as an attempt, and Rook says it doesn't count.
+- Locked slots show Rook's hint. Slots that need old bodies say so.
+- The board has **20 deaths** plus the twist's #21. Every one has a test (see `DEVELOPMENT_STATUS.md`).
 
-| # | Death | Trigger sketch | Needs corpses? |
+| # | Death | How it happens in the block | Needs bodies? |
 | --- | --- | --- | --- |
-| 1 | **Gravity Research** | Fall from the roof (height above the threshold) | |
-| 2 | **Mind the Gap** | Hit by the tram | |
-| 3 | **Compacted** | Inside the compactor when it runs | |
-| 4 | **Deep Fried** | Fall into Pell's fryer | |
-| 5 | **Not Waterproof** | Enter the canal | |
-| 6 | **Vending Machine Revenge** | Shake the machine until it tips onto you | |
-| 7 | **Overclocked** | Plug yourself into the market power strip | |
-| 8 | **Solar Flair** | Stand at the mirror array's focal point | |
-| 9 | **Crane Game** | The magnet crane lifts you and drops you | |
-| 10 | **Rusted Through** | Stand under Juniper's irrigation drip too long | |
-| 11 | **Crushed by Kindness** | Help Pell, and her bowl tower topples onto you | |
-| 12 | **Pigeon Rapture** | Scatter crumbs on the ledge while standing still | |
-| 13 | **Clothesline Express** | Ride a laundry line into the tram stop sign | |
-| 14 | **Self-Inflicted** | Hit by your own thrown corpse falling back down | ✓ |
-| 15 | **Two for One** | Compacted while carrying a corpse | ✓ |
-| 16 | **Stairway to Heaven** | Stack 5 corpses and jump from the top onto the antenna | ✓ |
-| 17 | **Group Hug** | Three or more corpses land on you at once | ✓ |
-| 18 | **Bored to Death** *(secret)* | Stand still for 3 minutes | |
-| 19 | **Died of Embarrassment** *(secret)* | Die in sight of all four neighbours at once | |
-| 20 | **Tried Being a Plant** *(secret)* | Plant yourself in a planter and wait for the water | |
+| 1 | **Gravity Research** | Any fall of 7.5 tiles or more, for example off the fire escape landing or the antenna | |
+| 2 | **Mind the Gap** | Be in the tram's path on the west street while it moves. It first arrives after about 5 s, waits 4 s at the stop, and comes back about every 18 s. You can stand on its roof while it waits. | |
+| 3 | **Compacted** | Be in Bas's compactor pit when it slams (about every 10 s, or sooner if you press its button with E) | |
+| 4 | **Deep Fried** | Fall into the fryer on Pell's cart. Jumping beside the cart, or walking off the dumpster lid, does it. | |
+| 5 | **Not Waterproof** | Walk into the canal on the west street | |
+| 6 | **Vending Machine Revenge** | Shake the vending machine with E four times. It tips towards you. | |
+| 7 | **Overclocked** | E at the power strip outside the building's east door | |
+| 8 | **Solar Flair** | Stand in the mirrors' focus on top of the scrap pile for about 1.7 s | |
+| 9 | **Crane Game** | Stand under the magnet crane's pickup spot. It lifts you and drops you over the scrap pile. Falls of 3.5 tiles or more after a magnet ride are fatal. | |
+| 10 | **Rusted Through** | Stand under Juniper's drip on the roof for 4 s | |
+| 11 | **Crushed by Kindness** | Leave a crate at Pell's cart while you're near her. She gives you all of her bowls. | |
+| 12 | **Pigeon Rapture** | Get crumbs from Pell, scatter them outdoors with E and don't move for 1.5 s. Moving scares them off. They can't reach you indoors. | |
+| 13 | **Clothesline Express** | E at the washing line's end by the roof's west parapet. You zip down into the tram stop sign. | |
+| 14 | **Self-Inflicted** | A body landing on you at 11 tiles/s or more, for example one you threw straight up with W | ✓ |
+| 15 | **Two for One** | Be compacted while carrying an old body | ✓ |
+| 16 | **Stairway to Heaven** | Reach up into the power line over the street. It's out of reach from every ledge. A tower of four upright bodies on the dumpster lid does it. Falling past it from above doesn't count, and neither do the pigeons. | ✓ |
+| 17 | **Group Hug** | Three bodies land on you within half a second | ✓ |
+| 18 | **Bored to Death** *(secret)* | Stand still with no input for 3 minutes | |
+| 19 | **Died of Embarrassment** *(secret, bonus)* | Die outdoors where all four neighbours can see. That's just right of Pell's cart. It's awarded alongside the main death. | |
+| 20 | **Tried Being a Plant** *(secret)* | E at Juniper's planter. You stay put until she waters you. | |
+| 21 | **Died Laughing** *(twist)* | Read the paper Rook pins to the Death Board after the twist. Not an attempt. | |
 
-Deaths 14–17 teach the player that their past selves are tools. **#21 Died Laughing** is awarded only by the twist.
+## Interactions (E)
 
-## Neighbours
+E uses the nearest thing within about 1.4 tiles: the vending machine, power strip, planter, washing line, compactor button, the Death Board corkboard, or a neighbour. A prompt at the top of the screen names it. With Pell's crumbs and nothing else in reach, E scatters them.
 
-- Each neighbour has a home position and a small set of lines keyed by state: attempt count, specific deaths, the most recent death and twist progress.
-- Interacting shows a speech bubble. Neighbours also speak unprompted after a death they witnessed, at most once per death.
-- No pathfinding AI in this slice. Neighbours stay put or follow short scripted routes, such as Bas's cart.
+## The twist
+
+1. After **12 unique deaths**, the replicator runs low on feedstock. The top bar warns, a red light blinks on the pod, and Bas says so.
+2. The next death has no ding. The screen goes dark for 7 s while the neighbours' voices rebuild the android from their own things. Pell gives a pot-lid cheek, Rook a toy arm, Juniper a sprouting shoulder. These parts stay on every copy afterwards.
+3. Rook pins the other half of the paper to the Death Board. Reading it shows **ONLY HUMANS DIE LAUGHING**, awards #21 Died Laughing, starts a rooftop party and puts the top bar's "Human" status at "provisionally". Play continues, and the neighbours' lines change.
+
+Saving during the dark resumes as "feedstock low", so the twist is never skipped.
+
+## Saving
+
+Progress saves in the browser: the attempt count, the board, every body and prop, talk counts, crumbs and twist state. It saves on each death, respawn and twist step, every 5 s, and when the page is hidden or closed. **Start over…** in the pause menu erases it after a confirmation.
 
 ## Edge cases
 
