@@ -1,4 +1,3 @@
-export const S = 20;
 export type Brush = CanvasRenderingContext2D;
 export type Rect = (
   x: number,
@@ -51,46 +50,87 @@ export function sprite(
       if (color) r(x + i * scale, y + j * scale, scale, scale, color);
     }
 }
-export const iconColors: Record<string, string> = {
-  k: "#14252a",
-  c: "#66b9c5",
-  l: "#c7fff1",
-  a: "#77dbc0",
-  g: "#338c79",
-  b: "#275b58",
-  p: "#ac87d1",
-  v: "#785e9b",
-  h: "#e2c4ee",
-  o: "#c37f58",
-  s: "#815449",
-  t: "#f2bd87",
-  d: "#453c43",
-  w: "#efe4c7",
-  y: "#e3ad67",
+const androidColors: Record<string, string> = {
+  k: "#101626", // outline
+  d: "#222b43", // joints and faceplate
+  s: "#485d78", // shaded alloy
+  y: "#8ba7b4", // brushed alloy
+  w: "#e5f1ea", // ceramic shell
+  o: "#df884d", // hazard orange
+  t: "#ffca78",
+  c: "#429ba9", // lens housing
+  l: "#a8fff2", // powered optics
 };
-export const androidArt = [
-  ".....kk.......kk....",
-  ".....kyk.....kyk....",
-  ".....kwwwkkkwwwk....",
-  "....kwwwwwwwwwwkk...",
-  "...kwwyyywwwwwyyyk..",
-  "...kwyyyywwwwwyyyk..",
-  "..skwwwkkkkkkkkwyk..",
-  "..skwwkclclcccwkysk.",
-  "..skwwkccllccckwyyk.",
-  "..sskkkbbbbbbkksssk.",
-  "..sookyywwyyykk....",
-  "..stokkoywwyykkw...",
-  "..sookoyywwyskyyk..",
-  "..sskkssyyyykkoyk..",
-  "....kkoyyyyyykook..",
-  "....kyskskksskkk...",
-  "....kwwk..kwwk.....",
-  "....kssk..kssk.....",
+
+const helmet = [
+  "..kkkkkkkk...",
+  ".kwwwwyyyyk..",
+  "kwwywwyyyyyk.",
+  "koywdddddddk.",
+  "ktywddlclddk.",
+  "koywdkllllck.",
+  ".ksyydddddk..",
+  "..kkssyykk...",
 ];
+const torso = [
+  ".kddkddk.",
+  "kywwwwsyk",
+  "kwwowwysk",
+  "kwyooyssk",
+  ".ksyyssk.",
+  ".kddkddk.",
+];
+const nearArm = [
+  ".kk.",
+  "kwwk",
+  "kyyk",
+  ".kd.",
+  "kyyk",
+  "kssk",
+  ".kk.",
+];
+const farArm = [
+  ".kk.",
+  "ksyk",
+  "kss.",
+  ".kd.",
+  ".ksk",
+  ".kk.",
+];
+const nearLeg = [
+  "kywk.",
+  "ksyk.",
+  ".kdk.",
+  ".kwk.",
+  ".kyyk",
+  ".kkkk",
+];
+const farLeg = [
+  "kssk.",
+  "kddk.",
+  ".kdk.",
+  ".ksk.",
+  ".kssk",
+  ".kkkk",
+];
+const ANDROID_HEIGHT = 20;
+
 export type Pose = "idle" | "walk" | "air" | "climb";
 
-/** Draws the android with its feet centred on (x, feetY). The sprite is 20 × 18 px. */
+function androidFrame(r: Rect, colors: Record<string, string>, pose: Pose, frame: number) {
+  const stride = pose === "walk" ? [0, 2, 0, -2][frame] : 0;
+  const reach = pose === "climb" ? (frame < 2 ? 2 : -2) : 0;
+  const tuck = pose === "air" ? 1 : 0;
+  const bob = Math.abs(stride) ? 1 : 0;
+  sprite(r, 0 - stride + tuck, -6 - Math.max(0, stride, -reach), farLeg, colors);
+  sprite(r, -5 + stride, -6 - Math.max(stride < 0 ? 1 : 0, reach, tuck), nearLeg, colors);
+  sprite(r, 4 + Math.sign(stride), -11 - Math.max(0, reach) - tuck, farArm, colors);
+  sprite(r, -4, -13 - bob, torso, colors);
+  sprite(r, -8 - Math.sign(stride), -12 - Math.max(0, -reach) - tuck, nearArm, colors);
+  sprite(r, -6, -ANDROID_HEIGHT - bob, helmet, colors);
+}
+
+/** Feet stay anchored to the player box as limbs move through each pose. */
 export function android(
   c: Brush,
   x: number,
@@ -102,54 +142,33 @@ export function android(
 ) {
   c.save();
   c.translate(Math.round(x), Math.round(feetY));
-  c.scale(left ? -1 : 1, 1);
-  const r = brush(c),
-    frame = reduced && pose !== "walk" ? 0 : Math.floor(t / 6) % 4;
-  let liftL = 0,
-    liftR = 0,
-    bob = 0;
-  if (pose === "walk") {
-    liftL = frame === 1 ? 1 : 0;
-    liftR = frame === 3 ? 1 : 0;
-    bob = frame % 2;
-  } else if (pose === "air") liftL = liftR = 1;
-  else if (pose === "climb") {
-    liftL = frame < 2 ? 2 : 0;
-    liftR = frame < 2 ? 0 : 2;
-  } else if (!reduced) bob = Math.floor(t / 40) % 2;
-  sprite(r, -10, -18 - bob, androidArt.slice(0, 16), iconColors);
-  const legs = androidArt.slice(16);
-  sprite(r, -10, -2 - liftL, legs.map((row) => row.slice(0, 9)), iconColors);
-  sprite(r, -1, -2 - liftR, legs.map((row) => row.slice(9)), iconColors);
+  if (left) c.scale(-1, 1);
+  androidFrame(brush(c), androidColors, pose, reduced && pose !== "walk" ? 0 : Math.floor(t / 6) % 4);
   c.restore();
 }
 
-// Corpse sprites: powered-off visors (d), stiff poses.
-export const flatArt = [
-  "....................",
-  "..............kk.kk.",
-  ".........kkkkkkykkyk",
-  "..kkkkkkkwwwwwwwwwwk",
-  "kkssyyyykwwykkkkkkwk",
-  "kwwyyyyykwwkddddddkk",
-  "kwwyyyykkwwykkkkkkwk",
-  "kkssyyyykwwwwwwwwwwk",
-  "..kkkkkkkkkkkkkkkkk.",
-  "....................",
+const flatArt = [
+  ".............kkkkk..",
+  ".....kkkk...kwwyyyk.",
+  "..kkkwwowkkkwwyddddk",
+  ".kssyyyooyskoywddddk",
+  "kyydkywwsskksyyddddk",
+  "kskdkksskkk.kssyyyk.",
+  "kkkkkkkk.....kkkkk..",
 ];
-export const cubeArt = [
+const cubeArt = [
   "kkkkkkkkkk",
-  "kwwkkkkwwk",
-  "kwkddddkwk",
-  "kwkkkkkkwk",
-  "kyyyyyyyyk",
-  "kyoyyyysyk",
-  "kyyyyyyyyk",
-  "ksyyyyyysk",
-  "kssssssssk",
-  "kkkkkkkkkk",
+  "kwwyyyysyk",
+  "kwkdddddok",
+  "kwkdddddok",
+  "kyssssssyk",
+  "kyowyyssyk",
+  "kyssyyssyk",
+  "ksyssysykk",
+  "kksssskkk.",
+  "kkkkkkkk..",
 ];
-const offVisor = { c: "#2a2724", l: "#3b3632", d: "#2a2724" };
+const offVisor = { c: "#364458", l: "#364458" };
 const tints: Record<string, Record<string, string>> = {
   none: {},
   fried: { w: "#d59a55", y: "#a8652f", s: "#6b3b1f", o: "#7a4321", t: "#c98a4a" },
@@ -159,7 +178,7 @@ const tints: Record<string, Record<string, string>> = {
   rusty: { w: "#c0794f", y: "#94512f", s: "#6e3a26", o: "#8a4728" },
   leafy: { w: "#b9d6a3", y: "#7fa866", s: "#4f7444", o: "#5f8a4c" },
 };
-export const corpseColors = (tint = "none") => ({ ...iconColors, ...offVisor, ...(tints[tint] ?? {}) });
+const corpseColors = (tint = "none") => ({ ...androidColors, ...offVisor, ...(tints[tint] ?? {}) });
 
 export function corpse(c: Brush, x: number, feetY: number, pose: string, tint: string | undefined, facingLeft: boolean) {
   const colors = corpseColors(tint);
@@ -167,12 +186,13 @@ export function corpse(c: Brush, x: number, feetY: number, pose: string, tint: s
   c.translate(Math.round(x), Math.round(feetY));
   if (facingLeft) c.scale(-1, 1);
   const r = brush(c);
-  if (pose === "flat") sprite(r, -10, -10, flatArt, colors);
+  if (pose === "flat") sprite(r, -10, -7, flatArt, colors);
   else if (pose === "cube") sprite(r, -5, -10, cubeArt, colors);
   else if (pose === "upside") {
     c.scale(1, -1);
-    sprite(r, -10, 0, androidArt, colors);
-  } else sprite(r, -10, -18, androidArt, colors);
+    c.translate(0, ANDROID_HEIGHT);
+    androidFrame(r, colors, "idle", 0);
+  } else androidFrame(r, colors, "idle", 0);
   if (tint === "leafy") {
     r(-2, pose === "flat" ? -12 : -21, 2, 3, "#6f9a5a");
     r(0, pose === "flat" ? -13 : -22, 3, 2, "#8fbf6a");
@@ -182,13 +202,12 @@ export function corpse(c: Brush, x: number, feetY: number, pose: string, tint: s
 
 /** The android drawn only from the feet up to `fraction` of its height: the replicator printing it. */
 export function printing(c: Brush, x: number, feetY: number, fraction: number) {
-  const h = Math.round(18 * Math.max(0, Math.min(1, fraction)));
+  const h = Math.round(ANDROID_HEIGHT * Math.max(0, Math.min(1, fraction)));
   c.save();
   c.beginPath();
   c.rect(Math.round(x) - 11, Math.round(feetY) - h, 22, h);
   c.clip();
-  const r = brush(c);
-  sprite(r, Math.round(x) - 10, Math.round(feetY) - 18, androidArt, iconColors);
+  android(c, x, feetY, false, 0, "idle", true);
   c.restore();
-  brush(c)(Math.round(x) - 9, Math.round(feetY) - h - 1, 18, 1, "#fff4d6");
+  brush(c)(Math.round(x) - 9, Math.round(feetY) - h - 1, 18, 1, "#a8fff2");
 }

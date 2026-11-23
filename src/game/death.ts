@@ -165,6 +165,7 @@ export function respawn(g: Game) {
   g.phaseTicks = 0;
   g.skip = false;
   g.input.jumpBuffer = 0;
+  g.input.upBuffer = 0;
   g.input.grabQueued = false;
   g.input.interactQueued = false;
   emit(g, { type: "respawn" });

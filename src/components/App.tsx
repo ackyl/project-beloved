@@ -12,8 +12,7 @@ import { uniqueDeaths } from "../game/death";
 import { BOARD } from "../game/data/deaths";
 import type { LastDeath } from "../game/state";
 import { Sound } from "../game/sound";
-import { isDesktop, readDevice, rememberOverride } from "../platform/device";
-import { DesktopOnly } from "./DesktopOnly";
+import { TouchControls } from "./TouchControls";
 import { GameCanvas } from "./GameCanvas";
 import { Icon } from "./Icon";
 import { DeathCard } from "./DeathCard";
@@ -21,7 +20,8 @@ import { DeathBoard } from "./DeathBoard";
 import { erase, load, save, type Store } from "../game/save";
 import { PAPER } from "../game/twist";
 import { NEIGHBOURS } from "../game/data/neighbours";
-import { T, view } from "../rendering/drawWorld";
+import { view } from "../rendering/drawWorld";
+import { T } from "../rendering/scenery";
 import { centerX } from "../game/physics";
 
 type Bubble = { key: number; who: string; text: string; until: number };
@@ -33,38 +33,8 @@ const moveKeys: Record<string, Direction> = {
   ArrowRight: "right",
   ArrowUp: "up",
   ArrowDown: "down",
-  KeyA: "left",
-  KeyD: "right",
-  KeyW: "up",
-  KeyS: "down",
 };
-const jumpKeys = new Set(["Space", "KeyK"]);
-const grabKeys = new Set(["ShiftLeft", "ShiftRight", "KeyJ"]);
 const CARD_MS = 4800;
-
-export function App() {
-  const [desktop, setDesktop] = useState(() => isDesktop(readDevice()));
-  useEffect(() => {
-    const update = () => setDesktop(isDesktop(readDevice()));
-    const queries = ["(pointer: coarse)", "(hover: hover)"].map((q) => matchMedia(q));
-    window.addEventListener("resize", update);
-    queries.forEach((q) => q.addEventListener("change", update));
-    return () => {
-      window.removeEventListener("resize", update);
-      queries.forEach((q) => q.removeEventListener("change", update));
-    };
-  }, []);
-  if (!desktop)
-    return (
-      <DesktopOnly
-        onOverride={() => {
-          rememberOverride();
-          setDesktop(true);
-        }}
-      />
-    );
-  return <Game />;
-}
 
 type Modal = "pause" | "board" | "paper" | "restart" | null;
 
@@ -77,7 +47,7 @@ function storage(): Store | null {
   }
 }
 
-function Game() {
+export function App() {
   const [g, setG] = useState<GameState>(() => load(storage()) ?? createGame()),
     [dark, setDark] = useState<{ who: string; text: string }[] | null>(null),
     [modal, setModal] = useState<Modal>(null),
@@ -85,6 +55,7 @@ function Game() {
     [audio, setAudio] = useState(false),
     [card, setCard] = useState<LastDeath | null>(null),
     [hint, setHint] = useState<string | null>(null),
+    [carrying, setCarrying] = useState(g.player.holding !== null),
     [bubbles, setBubbles] = useState<Bubble[]>([]),
     [, setRevision] = useState(0),
     [reduced, setReduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -169,10 +140,7 @@ function Game() {
       if (dir) {
         e.preventDefault();
         if (!e.repeat) command(g, { type: "move", dir, pressed: down, source: e.code });
-      } else if (jumpKeys.has(e.code)) {
-        e.preventDefault();
-        if (!e.repeat) command(g, { type: "jump", pressed: down });
-      } else if (grabKeys.has(e.code)) {
+      } else if (e.code === "KeyQ") {
         e.preventDefault();
         if (down && !e.repeat) command(g, { type: "grab" });
       } else if (e.code === "KeyE") {
@@ -284,6 +252,7 @@ function Game() {
     for (const e of drainEvents(g)) handle(e);
     const next = g.phase === "alive" ? prompt(g) : null;
     if (next !== hint) setHint(next);
+    if (carrying !== (g.player.holding !== null)) setCarrying(g.player.holding !== null);
     // Keep speech bubbles over whoever is talking.
     const now = performance.now();
     if (bubbles.some((b) => b.until < now)) setBubbles((list) => list.filter((b) => b.until >= now));
@@ -292,9 +261,9 @@ function Game() {
       const n = g.level.neighbours.find((n) => n.id === who);
       const p = g.player;
       const x = n ? n.x : centerX(p),
-        y = n ? n.y - 1.7 : p.y - 0.4;
-      (el as HTMLElement).style.left = (((x * T - view.camX) / view.w) * 100).toFixed(2) + "%";
-      (el as HTMLElement).style.top = (((y * T - view.camY) / view.h) * 100).toFixed(2) + "%";
+        y = n ? n.y - 1.92 : p.y - 0.4;
+      (el as HTMLElement).style.setProperty("--speaker-x", (((x * T - view.camX) / view.w) * 100).toFixed(2) + "%");
+      (el as HTMLElement).style.setProperty("--speaker-y", (((y * T - view.camY) / view.h) * 100).toFixed(2) + "%");
     }
   };
 
@@ -372,26 +341,25 @@ function Game() {
         ) : null}
         <ul className="legend" aria-label="Controls">
           <li>
-            <kbd>A</kbd>
-            <kbd>D</kbd> Walk
+            <kbd aria-label="Left arrow">←</kbd>
+            <kbd aria-label="Right arrow">→</kbd> Walk
           </li>
           <li>
-            <kbd>Space</kbd> Jump
+            <kbd aria-label="Up arrow">↑</kbd> Jump / climb
           </li>
           <li>
-            <kbd>W</kbd>
-            <kbd>S</kbd> Ladders
+            <kbd aria-label="Down arrow">↓</kbd> Climb down / drop
           </li>
           <li>
-            <kbd>Shift</kbd> Grab, throw
+            <kbd>Q</kbd> Grab / throw
           </li>
           <li>
             <kbd>E</kbd> Use
           </li>
-          <li className="hint">Hold W to throw up, S to set down or drop below you</li>
+          <li className="hint">↑ + Q to throw high · ↓ + Q to set down</li>
         </ul>
-        <p className="placeholder-tag">Placeholder art</p>
       </section>
+      <TouchControls game={g} carrying={carrying} paused={paused} />
       {modal ? (
         <div className="scrim" ref={dialog}>
           {modal === "board" ? (

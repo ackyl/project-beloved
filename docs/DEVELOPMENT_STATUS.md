@@ -30,7 +30,7 @@ The previous game, *Below, Beloved* (a mining and care vertical slice), was comp
 
 - **Not playtested by a person.** All tunables, the twist threshold (12 unique deaths), and the joke and line writing are first drafts.
 - **Not played from scratch in a browser.** The full natural run to the twist (12 different deaths) was only covered by automated tests. The browser check started from a seeded save.
-- **Placeholder art throughout.** It is drawn in code: neighbours are simple pixel figures, and the corpse sprites are rough.
+- **Art is drawn in code.** The main environment, android and four neighbours have dedicated pixel art. Some secondary props use simpler shapes.
 - **Bas carting bodies away** shows only as a speech bubble. There is no cart animation.
 - **Audio** is basic synthesized cues. Audible output was not checked, only that nothing errors.
 - **Speech bubbles** follow neighbours but can overlap each other or the death card when several people talk at once.

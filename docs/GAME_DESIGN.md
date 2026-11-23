@@ -2,7 +2,7 @@
 
 **Status:** v0.2 slice implemented (Chunks 0–4). It replaces the v0.1 mining slice *Below, Beloved*, which remains in git history at `ca6f8c1`.
 **Genre:** 2D side-view sandbox platformer. Absurdist comedy with a heartwarming core.
-**Platform:** Desktop only. Narrow or touch-only devices see a "desktop experience" screen.
+**Platform:** Desktop and mobile browsers with keyboard or touch controls.
 
 ## Logline
 
@@ -62,7 +62,7 @@ Their lines are short and state-driven. They change with the attempt count, spec
 
 ## Out of scope for this slice
 
-Combat, enemies, health bars, timers or any fail state, procedural levels, dialogue trees, crafting trees, multiple districts, mobile or touch controls, online features and accounts.
+Combat, enemies, health bars, timers or any fail state, procedural levels, dialogue trees, crafting trees, multiple districts, online features and accounts.
 
 ## Success criteria
 

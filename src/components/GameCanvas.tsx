@@ -21,21 +21,29 @@ export function GameCanvas({
   useEffect(() => {
     const canvas = ref.current!,
       ctx = canvas.getContext("2d")!,
+      viewport = canvas.parentElement!,
       draw = scene();
     let id = 0,
       last = 0,
       acc = 0,
       active = document.hasFocus();
     const resize = () => {
-      const scale = Math.max(1.5, Math.min(3.6, canvas.clientHeight / 300));
-      const dpr = window.devicePixelRatio || 1,
-        pixel = Math.max(1, Math.round(dpr * scale));
-      canvas.width = Math.max(1, Math.round((canvas.clientWidth * dpr) / pixel));
-      canvas.height = Math.max(1, Math.round((canvas.clientHeight * dpr) / pixel));
+      const { width, height } = viewport.getBoundingClientRect();
+      const scale = Math.max(1.5, Math.min(3.6, height / 300));
+      const dpr = window.devicePixelRatio || 1;
+      const pixel = Math.max(1, Math.round(dpr * scale));
+      const backingWidth = Math.max(1, Math.ceil((width * dpr) / pixel));
+      const backingHeight = Math.max(1, Math.ceil((height * dpr) / pixel));
+      if (canvas.width !== backingWidth) canvas.width = backingWidth;
+      if (canvas.height !== backingHeight) canvas.height = backingHeight;
+      // Fill the viewport with whole device pixels and clip the fractional edge.
+      canvas.style.width = (backingWidth * pixel) / dpr + "px";
+      canvas.style.height = (backingHeight * pixel) / dpr + "px";
       ctx.imageSmoothingEnabled = false;
     };
     const observer = new ResizeObserver(resize);
-    observer.observe(canvas);
+    observer.observe(viewport);
+    window.addEventListener("resize", resize);
     resize();
     const reset = () => {
       last = 0;
@@ -63,6 +71,7 @@ export function GameCanvas({
     return () => {
       cancelAnimationFrame(id);
       observer.disconnect();
+      window.removeEventListener("resize", resize);
       window.removeEventListener("focus", reset);
       window.removeEventListener("blur", reset);
       document.removeEventListener("visibilitychange", reset);
@@ -71,7 +80,7 @@ export function GameCanvas({
   return (
     <canvas
       ref={ref}
-      aria-label="Side view of the block: the walk-up, the street and the scrapyard. Walk with A and D, jump with Space, climb with W and S, grab and throw with Shift or J."
+      aria-label="Side view of the block, including the walk-up, the street and the scrapyard."
     />
   );
 }

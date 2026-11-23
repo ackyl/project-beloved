@@ -17,16 +17,16 @@
   src: url("/fonts/space-mono-latin-400-normal.woff2");
 }
 
-/* Dumpster-cozy shell: warm charcoal, cream paper, terracotta and faded teal. No neon. */
+/* Cool station hardware frames the warmer paper cards. */
 :root {
   color-scheme: dark;
-  --ink: #1d1a17;
-  --surface: #2a2521;
-  --line: #4a3f37;
-  --paper: #f1e6cf;
-  --muted: #b9aa96;
-  --terracotta: #d98c64;
-  --teal: #8fbfb3;
+  --ink: #151d2a;
+  --surface: #1d283a;
+  --line: #3a4a5d;
+  --paper: #e4edf0;
+  --muted: #aab9c7;
+  --terracotta: #e2a273;
+  --teal: #a1d6d3;
   --sun: #f4c77f;
   --mono: "Space Mono", monospace;
   font:
@@ -120,6 +120,7 @@ main {
   flex: 1;
   position: relative;
   min-height: 0;
+  overflow: hidden;
 }
 .viewport > canvas {
   display: block;
@@ -127,17 +128,6 @@ main {
   height: 100%;
   image-rendering: pixelated;
 }
-.placeholder-tag {
-  position: absolute;
-  right: 16px;
-  bottom: 14px;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font: 12px var(--mono);
-  color: var(--ink);
-  background: rgb(241 230 207 / 0.82);
-}
-
 .scrim {
   position: fixed;
   inset: 0;
@@ -146,9 +136,10 @@ main {
   padding: 16px;
   background: rgb(20 17 15 / 0.6);
 }
-.dialog,
-.desktop-card {
+.dialog {
   width: min(420px, 100%);
+  max-height: 100%;
+  overflow: auto;
   display: grid;
   gap: 14px;
   padding: 22px;
@@ -188,18 +179,6 @@ main {
   background: #f8d69e;
 }
 
-.desktop-only {
-  display: grid;
-  place-items: center;
-  padding: 16px;
-  background:
-    linear-gradient(180deg, #9cc3bd 0%, #f1dcb3 70%, #8f8274 70%) fixed;
-}
-.desktop-card h1 {
-  font-size: 26px;
-  line-height: 1.15;
-}
-
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
@@ -217,11 +196,11 @@ main {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 16px;
-  max-width: calc(100% - 160px);
+  max-width: calc(100% - 32px);
   border-radius: 6px;
   font-size: 13px;
   color: var(--paper);
-  background: rgb(29 26 23 / 0.78);
+  background: rgb(17 24 38 / 0.87);
 }
 .legend li {
   display: flex;
@@ -269,7 +248,7 @@ kbd {
   padding: 6px 12px;
   border-radius: 6px;
   font-weight: 600;
-  background: rgb(29 26 23 / 0.82);
+  background: rgb(17 24 38 / 0.9);
 }
 
 .death-card {
@@ -376,7 +355,7 @@ kbd {
 }
 .polaroids li.locked {
   color: var(--muted);
-  background: #3a332d;
+  background: #2b364a;
 }
 .polaroids li.twist {
   outline: 3px solid var(--sun);
@@ -406,6 +385,8 @@ kbd {
 }
 .bubble {
   position: absolute;
+  left: var(--speaker-x, 50%);
+  top: var(--speaker-y, 50%);
   max-width: 260px;
   padding: 7px 10px;
   border-radius: 8px;
@@ -511,4 +492,175 @@ kbd {
 }
 .death-card.twist {
   outline-color: #8fbfb3;
+}
+
+.touch-controls {
+  display: none;
+}
+
+@media (max-width: 719px), (pointer: coarse) and (hover: none) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px 10px;
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 7px
+      max(12px, env(safe-area-inset-left));
+  }
+
+  .wordmark {
+    font-size: clamp(14px, 4vw, 20px);
+    letter-spacing: 0.08em;
+  }
+
+  .status {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    font-size: 11px;
+  }
+
+  .status span {
+    white-space: nowrap;
+  }
+
+  .top-actions {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 4px;
+  }
+
+  .top-actions .square,
+  .board-btn {
+    min-height: 44px;
+  }
+
+  .top-actions .square {
+    width: 44px;
+  }
+
+  .board-btn {
+    padding: 0 8px;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .board-btn kbd,
+  .legend,
+  .prompt kbd {
+    display: none;
+  }
+
+  .prompt {
+    top: 8px;
+    max-width: calc(100% - 24px);
+    width: max-content;
+    font-size: 13px;
+  }
+
+  .bubble {
+    left: clamp(116px, var(--speaker-x, 50%), calc(100% - 116px));
+    top: max(96px, var(--speaker-y, 50%));
+    width: 212px;
+  }
+
+  .scrim {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right))
+      max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .touch-controls {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px max(16px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom))
+      max(16px, env(safe-area-inset-left));
+    border-top: 1px solid var(--line);
+    background: var(--ink);
+    touch-action: none;
+    user-select: none;
+  }
+
+  .touch-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .touch-actions button {
+    width: clamp(62px, 19vw, 90px);
+    min-height: 52px;
+    border: 1px solid #5c6e80;
+    border-bottom-width: 3px;
+    border-radius: 9px;
+    background: var(--surface);
+    font-size: 15px;
+    font-weight: 700;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .touch-actions .touch-grab {
+    color: #232230;
+    background: #e7ad78;
+    border-color: #b97e5d;
+  }
+
+  .touch-actions button:active {
+    transform: translateY(2px);
+    filter: brightness(0.85);
+  }
+
+  .joystick {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: clamp(76px, 14dvh, 112px);
+    aspect-ratio: 1;
+    flex: none;
+    border: 1px solid #61768a;
+    border-radius: 50%;
+    background: radial-gradient(circle, #152032 0 49%, #233044 50% 100%);
+    color: #bacddb;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .joystick span {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .stick-up { top: 2px; }
+  .stick-down { bottom: 2px; }
+  .stick-left { left: 5px; }
+  .stick-right { right: 5px; }
+
+  .stick-knob {
+    width: 39%;
+    aspect-ratio: 1;
+    border: 1px solid #809faa;
+    border-bottom-width: 3px;
+    border-radius: 50%;
+    background: #42596c;
+    transform: translate(var(--stick-x, 0), var(--stick-y, 0));
+  }
+}
+
+@media (orientation: landscape) and (min-width: 640px) and (max-height: 540px) {
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .status,
+  .top-actions {
+    grid-row: 1;
+  }
+
+  .status {
+    grid-column: 2;
+  }
+
+  .top-actions {
+    grid-column: 3;
+  }
 }

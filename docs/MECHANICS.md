@@ -5,14 +5,14 @@
 ## Movement and interaction
 
 - Side-view platformer with gravity. Walk, jump (with about 0.1 s of coyote time and a jump buffer), climb ladders, and drop through one-way platforms by pressing down.
-- **Grab:** pick up the nearest prop or body in front of you (or under your feet), carry it above your head, then throw it or set it down. Grab again to throw forward. Hold up while grabbing to throw high, or hold down to set it down at your feet. Throws follow deterministic arcs.
+- **Grab (Q):** pick up the nearest prop or body in front of you (or under your feet), carry it above your head, then throw it or set it down. Grab again to throw forward. Use Up + Q to throw high or Down + Q to set it down at your feet. Throws follow deterministic arcs.
 - **Props and bodies are solid from above only.** You and other props can stand and stack on them, but you walk through them sideways and they fall through you. This keeps stacking stable and avoids pushing physics. Take something away from the bottom of a stack and everything above it falls.
-- **Dropping below you:** in the air, hold down and grab to drop what you carry straight under your feet, then land on it. That is how towers of old bodies get built.
+- **Dropping below you:** in the air, use Down + Q to drop what you carry straight under your feet, then land on it. That is how towers of old bodies get built.
 - **Placement is always valid.** A released prop goes to the first free spot: where it was carried (when throwing) or in front of your feet (when setting down). If that spot is blocked, it goes inside your own box, which is always free.
 - **Interact (E):** talk to neighbours and use objects like the vending machine, crane controls, fryer or replicator.
-- **Controls:** A/D or arrow keys to move, W/Up to climb, S/Down to climb down or drop through a platform, Space or K to jump, Shift or J to grab and throw, E to interact, Tab for the Death Board, Esc to pause. Gamepad support is optional.
+- **Controls:** Left and Right to walk, Up to jump or climb, Down to climb down or drop through a platform, Q to grab or throw, E to interact, Tab for the Death Board, Esc to pause. On mobile, the right joystick supplies the arrow directions and the left buttons supply Grab / Throw and Use.
 - When two opposing directions are held, the most recently pressed one wins. Releasing it resumes the other.
-- **Ladders:** press up beside a ladder or down at its top to climb. The top of a ladder works as a one-way platform. Jump to leap off, or press left or right to let go.
+- **Ladders:** press Up beside a ladder or Down at its top to climb. The top of a ladder works as a one-way platform. Release Up or Down and press Left or Right to let go.
 
 ### Implemented tunables (Chunk 1)
 

@@ -35,7 +35,7 @@ describe("walking", () => {
 
   it("lets the most recently pressed direction win, and resumes the other on release", () => {
     const g = fresh([], { x: 12, y: 10 });
-    command(g, { type: "move", dir: "right", pressed: true, source: "KeyD" });
+    command(g, { type: "move", dir: "right", pressed: true, source: "ArrowRight" });
     run(g, 20);
     command(g, { type: "move", dir: "left", pressed: true, source: "ArrowLeft" });
     run(g, 20);
@@ -86,6 +86,16 @@ describe("jumping", () => {
 
   it("releasing early gives a short hop", () => {
     expect(apex(3).height).toBeLessThan(2);
+  });
+
+  it("jumps once when Up is held away from a ladder", () => {
+    const g = fresh();
+    press(g, "up");
+    let apexY = bottom(g.player);
+    run(g, 120, (g) => (apexY = Math.min(apexY, bottom(g.player))));
+    expect(apexY).toBeLessThan(6.7);
+    expect(g.events.filter((event) => event.type === "jump")).toHaveLength(1);
+    expect(g.player.grounded).toBe(true);
   });
 
   it("jumps over the 3-tile wall stub", () => {
@@ -165,6 +175,16 @@ describe("ladders", () => {
     holdUntil(g, "left", (g) => centerX(g.player) <= 17.8);
     run(g, 30);
     holdUntil(g, "down", (g) => g.player.grounded && Math.abs(bottom(g.player) - 10) < 1e-3);
+  });
+
+  it("catches a ladder with Up when standing slightly outside its column", () => {
+    const g = fresh([], { x: 16.8, y: 10 });
+    press(g, "up");
+    run(g, 8, assertNoOverlap);
+    expect(g.player.climbing).toBe(true);
+    expect(centerX(g.player)).toBeCloseTo(17.5);
+    expect(bottom(g.player)).toBeLessThan(9.5);
+    expect(g.events.some((event) => event.type === "jump")).toBe(false);
   });
 
   it("jumps off a ladder", () => {

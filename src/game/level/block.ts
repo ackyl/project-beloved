@@ -75,6 +75,12 @@ export function buildBlock(): Level {
       { kind: "tire", x: 104, y: STREET },
     ],
     decor: [
+      { kind: "observationBay", x: 32, y: 24 },
+      { kind: "observationBay", x: 38, y: STREET },
+      { kind: "serviceStation", x: 30.5, y: STREET },
+      { kind: "bulkhead", x: 22.5, y: STREET },
+      { kind: "bulkhead", x: 45.5, y: STREET },
+      { kind: "bulkhead", x: 45.5, y: 24 },
       { kind: "replicator", x: 24.6, y: STREET },
       { kind: "deathBoard", x: 34.5, y: 28.2 },
       { kind: "plant", x: 43.6, y: STREET },

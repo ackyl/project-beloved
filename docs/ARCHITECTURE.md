@@ -4,7 +4,7 @@
 
 - React and React DOM, strict TypeScript, Vite with the official React plugin, plain CSS, Vitest and an npm lockfile. The build is a static `dist/` suitable for Vercel.
 - No backend, router, accounts, external services, game engine or physics library. Add a dependency only when a measured need justifies it.
-- **Canvas 2D for the world:** tilemap, sprites, corpses, effects and camera. **React DOM for the shell:** top bar, death card, Death Board, speech bubbles, pause menu and the desktop-only screen.
+- **Canvas 2D for the world:** tilemap, sprites, corpses, effects and camera. **React DOM for the shell:** top bar, death card, Death Board, speech bubbles, pause menu and touch controls.
 
 ## Layout
 
@@ -16,7 +16,7 @@ src/
     GameCanvas.tsx     fixed-step loop and canvas sizing
     DeathCard.tsx      the card after each death
     DeathBoard.tsx     the board overlay (Tab)
-    DesktopOnly.tsx    "desktop experience" screen
+    TouchControls.tsx  On-screen joystick and action buttons
     Icon.tsx
   game/              simulation, free of React and DOM (except sound.ts)
     balance.ts         tunables

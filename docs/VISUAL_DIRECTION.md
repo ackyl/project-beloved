@@ -2,27 +2,24 @@
 
 ## Intent
 
-A sunny, scrappy, lived-in neighbourhood where an earnest android keeps dying in ridiculous ways. Think dumpster-cozy and solarpunk-adjacent: patched, sun-bleached and full of plants. It is cyberpunk density without the neon, the rain or the gloom.
+A lived-in sci-fi city block at dusk. The walk-up doubles as an android service station, with a replicator, diagnostics, bulky alloy walls and observation windows overlooking the city. The street vendors and rooftop plants keep the setting inhabited.
 
 ## Palette
 
 | Role | Colours |
 | --- | --- |
-| Sky | Faded teal `#9cc3bd` fading to warm cream `#f1dcb3` |
-| Buildings | Terracotta `#d39b72`, dusty clay `#b98a6b`, distant blue-grey `#86a7a1` |
-| Life | Plant greens `#6f9a5a` and `#4f7444`, terracotta pots `#b8644a` |
-| Tech | Solar-panel blue `#4d7a9c`, oxidised dumpster green `#5c7d69`, rust |
-| Light | Warm window amber `#f4c77f` and sun cream `#fff1cf` |
-| Accents | Laundry pastels: blush, butter, sky, linen, sage |
-
-No neon, no saturated magenta or cyan, and no dark rainy scenes.
+| Sky | Indigo `#27344f` through mauve `#636884` and dusty rose `#c29491` |
+| City | Distant steel blue `#596381`, slate `#394762`, near navy `#27344c` |
+| Walk-up | Alloy `#55697b`, graphite `#343e53`, pale edge `#8da5ad` |
+| Equipment | Cyan `#82ccd1` and amber `#cf975b` indicators |
+| Android | Ceramic `#e5f1ea`, brushed alloy `#8ba7b4`, amber markings and mint optics |
 
 ## Scene composition
 
-- **Side-view pixel art:** a low-resolution internal canvas scaled up with nearest-neighbour filtering. There are three depth layers: a far skyline, mid-ground buildings, and the playable layer.
-- **Density:** the block should feel stacked and patched together, with water tanks, antennas, tarps, laundry lines, potted tomatoes on dumpsters and hand-painted signs.
-- **Android:** a small, round-edged and readable sprite. Its stiff corpse poses (upright, flat, upside-down) must read as funny, not gruesome. Use sparks and loose bolts, never gore.
-- **Neighbours:** distinct silhouettes and colour accents so each can be recognised at a glance.
+- **Side-view pixel art.** Scale the canvas in whole device pixels. Use three parallax building layers with recessed facades and fixed lights. Keep distant surfaces subdued.
+- **Playable surfaces.** Use light seams for ledges and rungs. Interior wall panels and windows sit behind the action with lower contrast than the player.
+- **Android.** Use a recognisable helmet and dark faceplate, hard shoulder plates, visible knee and elbow joints, and separated boots. Power down the visor on corpses. Show sparks and loose bolts on impact.
+- **Neighbours.** Give each neighbour distinct clothing, colours and a recognisable accessory.
 
 ## Feel
 
@@ -33,7 +30,7 @@ No neon, no saturated magenta or cyan, and no dark rainy scenes.
 
 ## UI direction
 
-- The shell is warm charcoal with cream "paper" text, terracotta and faded-teal accents, and a Space Mono font for counters.
+- The shell uses slate and pale text with amber accents and Space Mono counters. Keep the paper cards warm.
 - The **Death Board** is a corkboard of polaroid cards with handwritten-style captions, plus Rook's star ratings in pencil.
 - Death cards slide up from the bottom and must not cover the playable area for long.
 - Keep the HUD to the top bar: the attempt count, the "Human: not yet" status and the audio and pause buttons.
@@ -41,7 +38,3 @@ No neon, no saturated magenta or cyan, and no dark rainy scenes.
 ## Audio
 
 Lightweight Web Audio cues: footsteps, jump, grab and throw, a comic stinger for each death category, the replicator ding, and ambient street sounds such as pigeons and a distant tram. Audio starts muted.
-
-## Placeholder policy
-
-Chunk 0 ships a code-drawn placeholder street. Code-drawn pixel sprites are fine through Chunk 3. Label placeholder art in the UI and docs until it's replaced.

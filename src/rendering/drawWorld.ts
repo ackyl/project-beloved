@@ -1,124 +1,23 @@
+import { drawNeighbour } from "./neighbours";
 import type { Game } from "../game/simulation";
 import { tramBox } from "../game/props";
-import { INTERIOR, isSolid, tileAt, type Decor, type Level } from "../game/level/level";
+import type { Decor } from "../game/level/level";
 import { bottom, centerX } from "../game/physics";
 import { android, brush, corpse, glow, poly, printing, type Brush, type Pose, type Rect } from "./pixels";
 import { KINDNESS_TICKS, PARTY_TICKS, PIGEON_GATHER_TICKS, PRINT_TICKS, SOLAR_TICKS } from "../game/balance";
 
-// Side-view renderer: sky and parallax skyline, cutaway building, tiles, decor,
-// props and the android. Placeholder art drawn in code; no neon.
-export const T = 16;
+import { bulkhead, city, drawInteriorTile, drawTile, hash, observationBay, serviceStation, T } from "./scenery";
 
-export const palette = {
-  skyTop: "#9cc3bd",
-  skyLow: "#f1dcb3",
-  far: "#86a7a1",
-  farShade: "#779790",
-  mid: "#b98a6b",
-  midShade: "#9c7058",
-  brick: "#c98d66",
-  mortar: "#ad7656",
-  trim: "#6f4b3c",
-  wallpaper: "#ead5b0",
-  stripe: "#e0c79f",
-  baseboard: "#a77c5c",
-  street: "#8f8274",
-  curb: "#b2a593",
-  deep: "#6f655b",
-  scrap: "#6e6a62",
-  rust: "#9a5d3c",
-  rivet: "#8e8a80",
-  plank: "#9a6a48",
-  plankHi: "#b98457",
-  rail: "#7a5a44",
-  window: "#f4c77f",
-  windowDark: "#5d4a44",
-  solar: "#4d7a9c",
-  solarLine: "#86b2c9",
-  leaf: "#6f9a5a",
-  leafDark: "#4f7444",
-  pot: "#b8644a",
-  dumpster: "#5c7d69",
-  cloth: ["#e9b8a8", "#f0dca0", "#a9cbd8", "#f4efe3", "#c4d6a6"],
+const palette = {
+  trim: "#161f2c",
+  solar: "#354d6a",
+  solarLine: "#80a7b4",
+  leaf: "#6f9981",
+  leafDark: "#456869",
+  pot: "#8d6164",
+  dumpster: "#486271",
+  cloth: ["#bf827a", "#dcc38c", "#88b1bd", "#e2d7c4", "#92b0a2"],
 };
-
-/** Deterministic pseudo-random value in [0, 1). */
-const hash = (a: number, b = 0) => {
-  const s = Math.sin(a * 127.1 + b * 311.7) * 43758.5453;
-  return s - Math.floor(s);
-};
-
-function skyline(r: Rect, w: number, base: number, offset: number, step: number, seed: number, low: number, high: number, color: string, shade: string, lit: boolean) {
-  const first = Math.floor(offset / step) - 1;
-  for (let i = first; i * step - offset < w + step; i++) {
-    const x = i * step - offset,
-      h = low + hash(i, seed) * (high - low),
-      bw = step - 2 - Math.floor(hash(i, seed + 9) * 6),
-      top = base - h;
-    r(x, top, bw, h + 400, color);
-    r(x + bw - 3, top, 3, h + 400, shade);
-    if (hash(i, seed + 3) > 0.55) r(x + 3, top - 4, 10, 4, shade);
-    if (hash(i, seed + 5) > 0.5) r(x + bw - 13, top - 2, 9, 2, palette.solar);
-    if (!lit) continue;
-    for (let wy = top + 7; wy < base - 8; wy += 12)
-      for (let wx = 4; wx < bw - 8; wx += 10)
-        if (hash(i * 31 + wx, wy) > 0.45)
-          r(x + wx, wy, 4, 5, hash(wx + i, wy) > 0.3 ? palette.window : palette.windowDark);
-  }
-}
-
-function drawTile(r: Rect, level: Level, tx: number, ty: number, sx: number, sy: number) {
-  const ch = tileAt(level, tx, ty);
-  if (ch === ".") return;
-  const above = tileAt(level, tx, ty - 1),
-    n = hash(tx, ty);
-  if (INTERIOR.has(ch)) {
-    r(sx, sy, T, T, palette.wallpaper);
-    for (let i = 2; i < T; i += 8) r(sx + i, sy, 2, T, palette.stripe);
-    if (isSolid(level, tx, ty + 1)) r(sx, sy + T - 3, T, 3, palette.baseboard);
-  }
-  switch (ch) {
-    case "#":
-      if (!isSolid(level, tx, ty - 1)) {
-        r(sx, sy, T, T, palette.street);
-        r(sx, sy, T, 3, palette.curb);
-        if (tx % 3 === 0) r(sx + 2, sy + 9, 10, 2, "#a3968a");
-      } else {
-        r(sx, sy, T, T, palette.deep);
-        if (n > 0.6) r(sx + Math.floor(n * 12), sy + 6, 2, 2, "#5f564d");
-      }
-      return;
-    case "B":
-      r(sx, sy, T, T, palette.brick);
-      for (let y = 0; y < T; y += 4) {
-        r(sx, sy + y + 3, T, 1, palette.mortar);
-        const off = ((ty * 4 + y) / 4) % 2 ? 4 : 12;
-        r(sx + off, sy + y, 1, 3, palette.mortar);
-      }
-      if (above !== "B") r(sx, sy, T, 2, palette.trim);
-      return;
-    case "M":
-      r(sx, sy, T, T, palette.scrap);
-      if (n > 0.4) r(sx + 2, sy + Math.floor(n * 9), 7, 4, palette.rust);
-      r(sx + 2, sy + 2, 1, 1, palette.rivet);
-      r(sx + 13, sy + 13, 1, 1, palette.rivet);
-      if (above !== "M") r(sx, sy, T, 2, "#8a857b");
-      return;
-    case "=":
-    case "_":
-      r(sx, sy, T, 4, palette.plank);
-      r(sx, sy, T, 1, palette.plankHi);
-      r(sx + 3, sy + 4, 2, 3, palette.trim);
-      r(sx + 11, sy + 4, 2, 3, palette.trim);
-      return;
-    case "H":
-    case "L":
-      r(sx + 2, sy, 2, T, palette.rail);
-      r(sx + 12, sy, 2, T, palette.rail);
-      for (let y = 2; y < T; y += 5) r(sx + 4, sy + y, 8, 2, palette.plankHi);
-      return;
-  }
-}
 
 function plant(r: Rect, x: number, y: number, size: number) {
   r(x - 4, y - 5, 8, 5, palette.pot);
@@ -126,6 +25,24 @@ function plant(r: Rect, x: number, y: number, size: number) {
   r(x - 3, y - 5 - size, 6, size, palette.leaf);
   r(x - 5, y - 3 - size, 3, size - 2, palette.leafDark);
   r(x + 2, y - 2 - size, 3, size - 3, palette.leafDark);
+}
+
+function vendingCabinet(r: Rect, x: number, y: number) {
+  r(x - 9, y - 29, 18, 29, "#171f30");
+  r(x - 7, y - 30, 14, 29, "#9a5459");
+  r(x - 8, y - 27, 17, 1, "#e7aa89");
+  r(x - 7, y - 25, 10, 15, "#2a384d");
+  r(x - 6, y - 24, 8, 13, "#455969");
+  for (let i = 0; i < 3; i++) {
+    r(x - 6, y - 22 + i * 4, 8, 1, "#87a0a7");
+    r(x - 5, y - 23 + i * 4, 2, 1, palette.cloth[i]);
+    r(x - 2, y - 23 + i * 4, 2, 1, "#e2cb9e");
+  }
+  r(x + 4, y - 25, 3, 5, "#242d41");
+  r(x + 5, y - 24, 1, 2, "#a1e5d0");
+  r(x - 5, y - 7, 10, 4, "#252b3d");
+  r(x - 4, y - 7, 8, 1, "#c48376");
+  r(x + 7, y - 26, 1, 24, "#713f4b");
 }
 
 function laundry(c: Brush, r: Rect, x1: number, y1: number, x2: number, y2: number, t: number, reduced: boolean) {
@@ -141,32 +58,59 @@ function laundry(c: Brush, r: Rect, x1: number, y1: number, x2: number, y2: numb
       x = x1 + (x2 - x1) * f,
       y = y1 + (y2 - y1) * f + 10 * 2 * f * (1 - f) * 2 - 1,
       sway = reduced ? 0 : Math.round(Math.sin(t / 40 + i));
-    r(x + sway, y, 8, 7 + (i % 3) * 3, palette.cloth[i % palette.cloth.length]);
+    const width = [8, 6, 10][i % 3], height = [7, 11, 8][i % 3];
+    r(x + sway, y, width, height, palette.cloth[i % palette.cloth.length]);
+    r(x + sway, y + height - 2, width, 1, "rgba(47,50,66,0.25)");
+    r(x + sway + 2, y - 1, 1, 2, "#4f5363");
   }
 }
+
+const backdropKinds = new Set<Decor["kind"]>(["observationBay", "serviceStation", "bulkhead"]);
 
 function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: number, reduced: boolean, g: Game) {
   const x = Math.round(d.x * T - camX),
     y = Math.round(d.y * T - camY);
   switch (d.kind) {
+    case "observationBay":
+      observationBay(r, x, y);
+      return;
+    case "serviceStation":
+      serviceStation(r, x, y);
+      return;
+    case "bulkhead":
+      bulkhead(r, x, y);
+      return;
     case "replicator":
-      glow(c, x, y - 16, 26, "255,214,150", reduced ? 0.35 : 0.3 + Math.sin(t / 50) * 0.06);
-      r(x - 9, y - 34, 18, 34, "#7f9c96");
-      r(x - 7, y - 32, 14, 28, "#bfe3da");
-      r(x - 5, y - 30, 10, 10, "#e8faf3");
-      r(x - 10, y - 3, 20, 3, palette.trim);
-      r(x - 3, y - 38, 6, 4, "#7f9c96");
-      if (g.twist === 1 || g.twist === 1.5) {
-        if (reduced || Math.floor(t / 20) % 2) r(x - 2, y - 37, 4, 2, "#e05a45");
-        glow(c, x, y - 36, 12, "240,110,80", 0.4);
-      }
-      if (g.rebuilt) r(x + 6, y - 20, 3, 5, "#d27b5d");
+      glow(c, x, y - 25, 36, "108,236,224", 0.23);
+      r(x - 12, y - 37, 24, 35, "#151f30");
+      r(x - 10, y - 41, 20, 39, "#4c6379");
+      r(x - 8, y - 43, 16, 5, "#8199aa");
+      r(x - 8, y - 39, 16, 1, "#1a2c41");
+      r(x - 7, y - 34, 14, 29, "#182b40");
+      r(x - 6, y - 32, 12, 25, "#315c70");
+      r(x - 5, y - 30, 10, 20, "#477b88");
+      r(x - 5, y - 31, 10, 2, "#8ce2de");
+      r(x - 6, y - 27, 1, 16, "#6fafb6");
+      r(x + 5, y - 27, 1, 16, "#6fafb6");
+      r(x - 8, y - 36, 16, 1, "#72b8c2");
+      r(x + 8, y - 26, 3, 11, "#2c3c51");
+      r(x + 9, y - 24, 1, 2, "#d2ab72");
+      r(x - 14, y - 4, 28, 4, "#242e41");
+      r(x - 10, y - 4, 20, 1, "#8293a2");
+      r(x - 3, y - 42, 6, 2, g.twist === 1 || g.twist === 1.5 ? "#ef8a6c" : "#b8fff1");
+      if (g.rebuilt) r(x + 8, y - 14, 3, 5, "#d27b5d");
       return;
     case "deathBoard":
-      r(x - 18, y - 22, 36, 22, palette.trim);
-      r(x - 16, y - 20, 32, 18, "#c9a16f");
-      for (let i = 0; i < 4; i++) r(x - 14 + i * 8, y - 17 + (i % 2) * 3, 6, 7, "#f4efe3");
-      r(x - 16, y - 26, 32, 3, "#f0e3c6");
+      r(x - 20, y - 24, 40, 24, "#1b2437");
+      r(x - 19, y - 23, 38, 21, "#697583");
+      r(x - 17, y - 20, 34, 16, "#82665f");
+      r(x - 16, y - 26, 32, 1, "#9fa9a9");
+      for (let i = 0; i < 4; i++) {
+        const px = x - 15 + i * 8, py = y - 18 + (i % 2) * 3;
+        r(px, py, 6, 8, "#ddd5be");
+        r(px + 1, py + 1, 4, 4, "#6c7885");
+        r(px + 2, py + 6, 3, 1, "#a59b88");
+      }
       if (g.twist >= 2) {
         r(x + 8, y - 21, 10, 6, "#fffaf0");
         r(x + 9, y - 19, 7, 1, "#3b332e");
@@ -196,54 +140,78 @@ function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: n
       r(x - 1, y, 2, 1, palette.trim);
       return;
     case "antenna":
-      r(x - 8, y - 3, 16, 2, "#5b524b");
-      r(x - 5, y - 8, 10, 2, "#5b524b");
-      r(x - 1, y - 14, 2, 12, "#5b524b");
-      if (!reduced && Math.floor(t / 30) % 2) r(x - 1, y - 16, 2, 2, "#e46f55");
+      r(x - 8, y - 3, 16, 2, "#566a7e");
+      r(x - 5, y - 8, 10, 2, "#8a9ca7");
+      r(x - 1, y - 14, 2, 13, "#657a8d");
+      r(x - 1, y - 16, 2, 2, "#df8975");
       return;
     case "dumpster":
-      r(x - 20, y - 22, 40, 22, palette.dumpster);
-      r(x - 22, y - 25, 44, 4, "#4c6a58");
-      r(x - 16, y - 14, 32, 1, "#4c6a58");
+      r(x - 20, y - 23, 40, 23, "#212b3d");
+      r(x - 19, y - 22, 38, 18, palette.dumpster);
+      r(x - 22, y - 25, 44, 4, "#627e85");
+      r(x - 22, y - 25, 44, 1, "#8aa1a3");
+      r(x - 18, y - 20, 36, 2, "#334c60");
+      for (const dx of [-15, -7, 7, 15]) {
+        r(x + dx, y - 17, 2, 11, "#365162");
+        r(x + dx - 1, y - 17, 1, 11, "#587586");
+      }
+      r(x - 5, y - 14, 10, 4, "#b4956b");
+      r(x - 3, y - 13, 6, 1, "#655953");
+      r(x - 15, y - 4, 5, 4, "#111b2b");
+      r(x + 10, y - 4, 5, 4, "#111b2b");
       plant(r, x, y - 25, 8);
-      r(x + 2, y - 33, 3, 3, "#d2563f");
+      r(x + 2, y - 33, 3, 3, "#d98670");
       return;
     case "noodleCart": {
-      r(x - 16, y - 18, 32, 14, "#c7684d");
-      r(x - 16, y - 18, 32, 2, "#e08a64");
-      r(x - 18, y - 48, 36, 4, "#f0dca0");
-      for (let i = 0; i < 6; i++) r(x - 18 + i * 6, y - 44, 3, 3, i % 2 ? "#f0dca0" : "#c7684d");
-      r(x - 16, y - 44, 1, 26, palette.trim);
-      r(x + 15, y - 44, 1, 26, palette.trim);
-      // The fryer: a very hot pot.
-      r(x - 11, y - 27, 22, 9, "#3b332e");
+      r(x - 17, y - 19, 34, 15, "#242a3c");
+      r(x - 16, y - 17, 32, 11, "#a65b59");
+      r(x - 14, y - 14, 13, 6, "#784758");
+      r(x - 12, y - 13, 8, 1, "#c27a6b");
+      r(x + 3, y - 13, 10, 2, "#d08a71");
+      r(x - 17, y - 20, 34, 2, "#b89b87");
+      r(x - 18, y - 48, 36, 5, "#38465b");
+      r(x - 16, y - 50, 32, 2, "#647689");
+      r(x - 17, y - 45, 34, 1, "#e6ad76");
+      r(x - 8, y - 48, 16, 2, "#a86c67");
+      for (const dx of [-16, 15]) {
+        r(x + dx, y - 43, 2, 23, "#313b4f");
+        r(x + dx, y - 43, 1, 23, "#647080");
+      }
+      // Fryer glow, kept compact so the hot surface remains legible.
+      glow(c, x, y - 28, 13, "255,190,110", 0.26);
+      r(x - 11, y - 27, 22, 8, "#302a35");
+      r(x - 9, y - 24, 18, 1, "#89665c");
       r(x - 10, y - 28, 20, 2, "#e8a640");
       const bubble = reduced ? 0 : Math.floor(t / 9) % 4;
       r(x - 7 + bubble * 3, y - 30, 2, 2, "#f6cf6e");
       r(x + 4 - bubble, y - 29, 2, 1, "#f6cf6e");
-      glow(c, x, y - 28, 14, "255,190,110", 0.3);
-      r(x - 10, y - 4, 4, 4, "#3b332e");
-      r(x + 6, y - 4, 4, 4, "#3b332e");
+      for (const dx of [-11, 7]) {
+        r(x + dx, y - 5, 5, 5, "#20293a");
+        r(x + dx + 2, y - 3, 1, 1, "#75828d");
+      }
       return;
     }
     case "vending":
-      r(x - 9, y - 30, 18, 30, "#d65f49");
-      r(x - 7, y - 27, 10, 18, "#f1e6cf");
-      for (let i = 0; i < 3; i++) r(x - 6, y - 25 + i * 6, 8, 3, palette.cloth[i]);
-      r(x + 5, y - 26, 2, 8, "#3b332e");
-      r(x - 7, y - 6, 10, 3, "#3b332e");
+      vendingCabinet(r, x, y);
       return;
     case "streetLamp":
-      r(x - 1, y - 40, 2, 40, "#5b524b");
-      r(x - 1, y - 42, 8, 2, "#5b524b");
-      r(x + 4, y - 40, 5, 3, "#f1e6cf");
-      r(x - 5, y - 18, 10, 6, palette.solar);
+      glow(c, x + 5, y - 38, 16, "255,198,133", 0.25);
+      r(x - 2, y - 40, 4, 40, "#293749");
+      r(x - 1, y - 38, 1, 36, "#667788");
+      r(x - 2, y - 42, 12, 4, "#394658");
+      r(x + 2, y - 39, 7, 1, "#f2bf89");
+      r(x - 4, y - 4, 8, 4, "#435468");
+      r(x - 5, y - 18, 10, 6, "#354a60");
+      r(x - 3, y - 16, 6, 1, "#a4b5b8");
       return;
     case "tramSign":
-      r(x - 1, y - 34, 2, 34, "#5b524b");
-      r(x - 8, y - 42, 16, 10, "#f0dca0");
-      r(x - 6, y - 39, 12, 1, palette.trim);
-      r(x - 6, y - 36, 8, 1, palette.trim);
+      r(x - 2, y - 34, 4, 34, "#303e50");
+      r(x - 1, y - 33, 1, 31, "#5f7283");
+      r(x - 9, y - 43, 18, 11, "#232e42");
+      r(x - 8, y - 42, 16, 8, "#4c697c");
+      r(x - 6, y - 40, 3, 4, "#e0a576");
+      r(x - 1, y - 40, 7, 1, "#bbced0");
+      r(x - 1, y - 37, 5, 1, "#83a7ad");
       return;
     case "compactor": {
       const top = y - 8 * T;
@@ -360,10 +328,13 @@ function drawDecor(c: Brush, r: Rect, d: Decor, camX: number, camY: number, t: n
 function drawProp(r: Rect, kind: string, x: number, y: number, w: number, h: number) {
   switch (kind) {
     case "crate":
-      r(x, y, w, h, "#a8744c");
-      r(x + 1, y + 1, w - 2, h - 2, "#c38c5e");
-      r(x + 1, y + h / 2 - 1, w - 2, 2, "#a8744c");
-      r(x + w / 2 - 1, y + 1, 2, h - 2, "#a8744c");
+      r(x, y, w, h, "#1a2335");
+      r(x + 1, y + 1, w - 2, h - 2, "#6f8596");
+      r(x + 2, y + 4, w - 4, h - 6, "#495e76");
+      r(x + 2, y + 4, w - 4, 1, "#334259");
+      r(x + 3, y + 6, w - 6, 1, "#b78a63");
+      r(x + 2, y + h - 3, 1, 2, "#849ca7");
+      r(x + w - 3, y + h - 3, 1, 2, "#849ca7");
       return;
     case "pot":
       r(x, y + 2, w, h - 2, palette.pot);
@@ -415,29 +386,24 @@ export function scene() {
     view.w = w;
     view.h = h;
 
-    // Sky, sun and parallax skyline.
-    const sky = c.createLinearGradient(0, 0, 0, h);
-    sky.addColorStop(0, palette.skyTop);
-    sky.addColorStop(0.8, palette.skyLow);
-    c.fillStyle = sky;
-    c.fillRect(0, 0, w, h);
-    const sunX = w * 0.78 - camX * 0.03,
-      sunY = h * 0.16 - camY * 0.03;
-    glow(c, sunX, sunY, 90, "255,236,190", 0.7);
-    r(sunX - 10, sunY - 10, 20, 20, "#fff1cf");
-    const street = 30 * T - camY;
-    skyline(r, w, street * 0.35 + h * 0.4 - 20, camX * 0.15, 34, 11, 50, 140, palette.far, palette.farShade, false);
-    skyline(r, w, street * 0.65 + h * 0.2, camX * 0.4, 46, 37, 40, 120, palette.mid, palette.midShade, true);
+    city(c, r, w, h, camX, camY);
 
     // Tiles behind everything that moves.
     const x0 = Math.max(0, Math.floor(camX / T)),
       x1 = Math.min(level.w - 1, Math.ceil((camX + w) / T)),
       y0 = Math.max(0, Math.floor(camY / T)),
       y1 = Math.min(level.h - 1, Math.ceil((camY + h) / T));
-    for (let yy = y0; yy <= y1; yy++)
-      for (let xx = x0; xx <= x1; xx++)
-        drawTile(r, level, xx, yy, xx * T - camX, yy * T - camY);
-    for (const d of level.decor) drawDecor(c, r, d, camX, camY, t, reduced, g);
+    const tiles = (draw: typeof drawTile) => {
+      for (let yy = y0; yy <= y1; yy++)
+        for (let xx = x0; xx <= x1; xx++)
+          draw(r, level, xx, yy, xx * T - camX, yy * T - camY);
+    };
+    tiles(drawInteriorTile);
+    for (const d of level.decor)
+      if (backdropKinds.has(d.kind)) drawDecor(c, r, d, camX, camY, t, reduced, g);
+    tiles(drawTile);
+    for (const d of level.decor)
+      if (!backdropKinds.has(d.kind)) drawDecor(c, r, d, camX, camY, t, reduced, g);
     if (g.board.laughing) drawBunting(c, camX, camY, t, reduced);
     drawMachines(c, r, g, camX, camY, t, reduced);
 
@@ -466,9 +432,9 @@ export function scene() {
       }
       if (p.planted) {
         const grow = Math.min(8, Math.floor(p.planted / 20));
-        r(px - 1, py - 18 - grow, 2, grow, palette.leaf);
-        r(px - 4, py - 18 - grow, 3, 2, palette.leafDark);
-        r(px + 1, py - 17 - grow, 3, 2, palette.leaf);
+        r(px - 1, py - 20 - grow, 2, grow, palette.leaf);
+        r(px - 4, py - 20 - grow, 3, 2, palette.leafDark);
+        r(px + 1, py - 19 - grow, 3, 2, palette.leaf);
       }
       if (p.damp > 0 && !reduced) r(px - 3 + ((t * 3) % 6), py - 20 + ((t * 2) % 14), 1, 2, "#9cc7cf");
       if (p.pigeons) {
@@ -529,55 +495,9 @@ export function scene() {
 /** Shared with the DOM shell so it can place speech bubbles over the canvas. */
 export const view = { camX: 0, camY: 0, w: 1, h: 1 };
 
-const NEIGHBOUR_LOOK = {
-  pell: { hair: "#d9d4cc", skin: "#c99572", body: "#c7684d", trim: "#f0dca0", h: 21 },
-  rook: { hair: "#4d7a9c", skin: "#b07a58", body: "#e9b8a8", trim: "#f4efe3", h: 16 },
-  bas: { hair: "#d29a3d", skin: "#a56b4c", body: "#5c7d69", trim: "#7a5a44", h: 25 },
-  juniper: { hair: "#e3c47a", skin: "#8f5e44", body: "#6f9a5a", trim: "#4f7444", h: 22 },
-} as const;
-
-function drawNeighbour(r: Rect, id: keyof typeof NEIGHBOUR_LOOK, x: number, y: number, t: number, reduced: boolean) {
-  const L = NEIGHBOUR_LOOK[id],
-    h = L.h,
-    bob = reduced ? 0 : Math.floor(t / 45 + x) % 2,
-    top = y - h - bob;
-  const w = id === "bas" ? 14 : id === "rook" ? 9 : 11;
-  r(x - w / 2, top + 7, w, h - 9, L.body); // body
-  r(x - w / 2 + 2, y - 3, 3, 3, "#3b332e"); // feet
-  r(x + w / 2 - 5, y - 3, 3, 3, "#3b332e");
-  r(x - 4, top + 1, 8, 7, L.skin); // head
-  r(x + 1, top + 4, 1, 1, "#2a2724");
-  r(x - 2, top + 4, 1, 1, "#2a2724");
-  switch (id) {
-    case "pell":
-      r(x - 5, top - 1, 10, 3, L.hair);
-      r(x - 2, top - 4, 5, 4, L.hair); // bun
-      r(x - 4, top + 10, 8, h - 14, L.trim); // apron
-      break;
-    case "rook":
-      r(x - 5, top, 10, 3, L.hair); // cap
-      r(x + 3, top + 2, 4, 1, L.hair);
-      r(x + 4, top + 9, 5, 6, L.trim); // notebook
-      r(x + 5, top + 11, 3, 1, "#7a5a44");
-      break;
-    case "bas":
-      r(x - 5, top - 1, 10, 3, L.hair); // cap
-      r(x - 4, top + 6, 8, 4, "#6b4a33"); // beard
-      r(x - 6, top + 9, 2, 8, L.trim); // straps
-      r(x + 4, top + 9, 2, 8, L.trim);
-      break;
-    case "juniper":
-      r(x - 8, top, 16, 2, L.hair); // straw hat
-      r(x - 4, top - 3, 8, 3, L.hair);
-      r(x + 6, top + 12, 6, 5, "#7a8f8a"); // watering can
-      r(x + 11, top + 11, 3, 2, "#7a8f8a");
-      break;
-  }
-}
-
 function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t: number, reduced: boolean) {
   for (const n of g.level.neighbours)
-    drawNeighbour(r, n.id, Math.round(n.x * T - camX), Math.round(n.y * T - camY), t, reduced);
+    drawNeighbour(r, n.id, Math.round(n.x * T - camX), Math.round(n.y * T - camY));
   const crane = g.crane,
     cm = g.level.machines.crane;
   if (crane && cm) {
@@ -600,12 +520,7 @@ function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t:
     c.translate(x + shake + (v.dir > 0 ? 9 : -9) * (angle ? 1 : 0), y);
     c.rotate(angle);
     c.translate(angle ? (v.dir > 0 ? -9 : 9) : 0, 0);
-    const rr = brush(c);
-    rr(-9, -30, 18, 30, "#d65f49");
-    rr(-7, -27, 10, 18, "#f1e6cf");
-    for (let i = 0; i < 3; i++) rr(-6, -25 + i * 6, 8, 3, palette.cloth[i]);
-    rr(5, -26, 2, 8, "#3b332e");
-    rr(-7, -6, 10, 3, "#3b332e");
+    vendingCabinet(brush(c), 0, 0);
     c.restore();
   }
 
@@ -615,17 +530,26 @@ function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t:
       y = Math.round(tram.y * T - camY),
       w = Math.round(tram.w * T),
       h = Math.round(tram.h * T);
-    r(x, y + 4, w, h - 8, "#e6cf9b");
-    r(x, y + h - 12, w, 4, "#6f9e95");
-    r(x + 2, y, w - 4, 5, "#c9b07c");
-    for (let i = 0; i < Math.floor(w / 14); i++) {
-      r(x + 6 + i * 14, y + 9, 9, 10, "#5d4a44");
-      r(x + 7 + i * 14, y + 10, 7, 8, i % 3 ? "#f4c77f" : "#a9cbd8");
+    r(x, y + 3, w, h - 6, "#1a263b");
+    r(x + 4, y, w - 9, 5, "#667b90");
+    r(x + 2, y + 5, w - 4, h - 11, "#7e939e");
+    r(x + 4, y + 7, w - 8, 14, "#263e56");
+    for (let wx = x + 6; wx < x + w - 14; wx += 14) {
+      r(wx, y + 9, 10, 10, "#46687d");
+      r(wx + 1, y + 9, 7, 2, "#81a2ad");
+      r(wx + 8, y + 16, 1, 2, "#79999c");
     }
-    r(x + w - 6, y + 8, 4, 22, "#c7684d");
-    r(x + 10, y - 10, 1, 10, "#3b332e");
-    r(x + 6, y - 11, 10, 1, "#3b332e");
-    for (const wx of [x + 8, x + w - 18]) r(wx, y + h - 4, 10, 4, "#3b332e");
+    r(x + 2, y + h - 12, w - 4, 2, "#bf8569");
+    r(x + 2, y + h - 6, w - 4, 3, "#334459");
+    r(x + w - 11, y + 7, 8, 13, "#32485d");
+    r(x + w - 5, y + h - 12, 5, 2, "#f5d0a1");
+    r(x, y + h - 12, 3, 2, "#d78979");
+    r(x + 10, y - 10, 1, 10, "#65778a");
+    r(x + 6, y - 11, 10, 1, "#65778a");
+    for (const wx of [x + 8, x + w - 18]) {
+      r(wx, y + h - 5, 10, 5, "#1d2639");
+      r(wx + 2, y + h - 4, 6, 1, "#718597");
+    }
   }
   const m = g.level.machines.compactor,
     k = g.compactor;
@@ -650,12 +574,12 @@ function drawMachines(c: Brush, r: Rect, g: Game, camX: number, camY: number, t:
 function rebuiltParts(r: Rect, x: number, feetY: number, left: boolean) {
   const X = (dx: number, w: number) => Math.round(x + (left ? -dx - w : dx));
   const y = Math.round(feetY);
-  r(X(1, 4), y - 11, 4, 4, "#9a948c"); // pot lid cheek
-  r(X(2, 2), y - 10, 2, 1, "#c9c3ba");
-  r(X(-8, 3), y - 8, 3, 5, "#e05a45"); // toy arm
-  r(X(-8, 3), y - 4, 3, 2, "#4d7a9c");
-  r(X(4, 2), y - 9, 2, 2, "#6f9a5a"); // sprout
-  r(X(5, 3), y - 11, 3, 2, "#8fbf6a");
+  r(X(-5, 3), y - 14, 3, 2, "#9a948c"); // pot lid cheek
+  r(X(-5, 2), y - 14, 2, 1, "#c9c3ba");
+  r(X(-8, 3), y - 10, 3, 4, "#e05a45"); // toy arm
+  r(X(-8, 3), y - 7, 3, 2, "#4d7a9c");
+  r(X(6, 1), y - 14, 1, 4, "#6f9a5a"); // sprout
+  r(X(7, 2), y - 14, 2, 2, "#8fbf6a");
 }
 
 /** Bunting across the roof once the block has thrown its party. */

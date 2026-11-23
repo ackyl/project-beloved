@@ -30,14 +30,20 @@ export function command(g: Game, c: Command) {
       input.held.length = 0;
       input.jumpHeld = false;
       input.jumpBuffer = 0;
+      input.upBuffer = 0;
       input.grabQueued = false;
       input.interactQueued = false;
       return;
     case "move": {
       if (!DIRECTIONS.has(c.dir) || typeof c.pressed !== "boolean") return;
       const source = c.source ?? c.dir;
+      const newUp = c.pressed && c.dir === "up" && !input.held.some((h) => h.dir === "up");
       input.held = input.held.filter((h) => h.source !== source);
       if (c.pressed) input.held.push({ dir: c.dir, source });
+      if (newUp) {
+        if (g.phase === "dead") g.skip = true;
+        if (g.phase === "alive") input.upBuffer = JUMP_BUFFER_TICKS;
+      }
       return;
     }
     case "jump":

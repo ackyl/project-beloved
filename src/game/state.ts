@@ -149,6 +149,7 @@ export function createGame(level: Level = buildBlock()) {
       held: [] as { dir: Direction; source: string }[],
       jumpHeld: false,
       jumpBuffer: 0,
+      upBuffer: 0,
       grabQueued: false,
       interactQueued: false,
     },

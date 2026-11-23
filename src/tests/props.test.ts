@@ -65,7 +65,9 @@ describe("throwing and setting down", () => {
     grab(g);
     const carried = g.bodies[0].y;
     press(g, "up");
+    run(g, 3);
     grab(g);
+    expect(g.player.grounded).toBe(true);
     release(g, "up");
     let top = Infinity;
     run(g, 120, (g) => (top = Math.min(top, g.bodies[0].y)));

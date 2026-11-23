@@ -11,6 +11,9 @@
 export type PropKind = "crate" | "pot" | "tire" | "cube";
 export type Point = { x: number; y: number };
 export type DecorKind =
+  | "observationBay"
+  | "serviceStation"
+  | "bulkhead"
   | "replicator"
   | "deathBoard"
   | "sofa"
